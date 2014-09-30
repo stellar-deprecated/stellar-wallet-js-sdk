@@ -1,0 +1,32 @@
+{
+  "name": "stellar-wallet-js-sdk",
+  "version": "0.0.0",
+  "private": false,
+  "keywords": [
+    "stellar"
+  ],
+  "dependencies": {
+    "bluebird": "~2.3.4",
+    "dot-object": "~0.3.0",
+    "lodash": "~2.4.1",
+    "superagent": "~0.18.2",
+    "tweetnacl": "git+https://github.com/stellar/tweetnacl-js.git"
+  },
+  "devDependencies": {
+    "gulp": "~3.6.0",
+    "gulp-rimraf": "~0.1.0",
+    "gulp-load-plugins": "~0.5.0",
+    "gulp-rename": "~1.2.0",
+    "gulp-uglify": "~0.3.1",
+    "gulp-webpack": "~0.4.1",
+    "run-sequence": "~0.3.6",
+    "webpack": "~1.4.4"
+  },
+  "engines": {
+    "node": ">=0.10.0"
+  },
+  "repository": {
+    "type" : "git",
+    "url" : "https://github.com/stellar/stellar-wallet-js-sdk"
+  }
+}

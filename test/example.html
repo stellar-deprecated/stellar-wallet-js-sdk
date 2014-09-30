@@ -1,0 +1,23 @@
+<html>
+  <head>
+    <title>stellar-wallet-js-sdk</title>
+  </head>
+  <body>
+    <script src="../build/stellar-wallet.js"></script>
+    <script type="application/javascript">
+      StellarWallet.init({
+        server: 'http://localhost:3000'
+      });
+      // Login
+      StellarWallet.login({
+        username: 'username',
+        walletId: 'wallet_id',
+        totpCode: '012345'
+      }).then(function(wallet) {
+        console.log(wallet);
+      }).catch(StellarWallet.errors.WalletNotFound, function(e) {
+        console.error('Wallet not found');
+      });
+    </script>
+  </body>
+</html>
