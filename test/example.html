@@ -17,6 +17,8 @@
         console.log(wallet);
       }).catch(StellarWallet.errors.WalletNotFound, function(e) {
         console.error('Wallet not found');
+      }).catch(StellarWallet.errors.Forbidden, function(e) {
+        console.error('Forbidden');
       });
     </script>
   </body>
