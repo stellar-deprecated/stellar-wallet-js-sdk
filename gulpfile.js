@@ -17,7 +17,7 @@ gulp.task('build-browser', [], function() {
           library: 'StellarWallet'
         }
       }))
-      .pipe(plugins.uglify())
+      //.pipe(plugins.uglify())
       .pipe(plugins.rename('stellar-wallet.js'))
       .pipe(gulp.dest('build'));
 });
@@ -28,5 +28,5 @@ gulp.task('clean', function () {
 });
 
 gulp.task('watch', ['build'], function() {
-  gulp.watch('lib/*', ['build']);
+  gulp.watch('lib/**/*', ['build']);
 });
