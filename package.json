@@ -7,6 +7,7 @@
   ],
   "dependencies": {
     "bluebird": "~2.3.4",
+    "camel-case": "~1.0.2",
     "dot-object": "~0.3.0",
     "lodash": "~2.4.1",
     "sjcl": "git+https://github.com/stellar/sjcl.git",
@@ -15,17 +16,22 @@
     "tweetnacl": "git+https://github.com/stellar/tweetnacl-js.git"
   },
   "devDependencies": {
+    "chai": "~1.9.0",
     "gulp": "~3.6.0",
     "gulp-rimraf": "~0.1.0",
     "gulp-load-plugins": "~0.5.0",
     "gulp-rename": "~1.2.0",
     "gulp-uglify": "~0.3.1",
     "gulp-webpack": "~0.4.1",
+    "mocha": "~1.17.1",
     "run-sequence": "~0.3.6",
     "webpack": "~1.4.4"
   },
   "engines": {
     "node": ">=0.10.0"
+  },
+  "scripts": {
+    "test": "mocha --recursive"
   },
   "repository": {
     "type" : "git",

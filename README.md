@@ -37,9 +37,9 @@ StellarWallet.createWallet({
   password: "cat-walking-on-keyboard",
   // Account public key
   publicKey: "e335c4a9416edaa635156d3114e4a21c790c332732c5624f067f4f8a1ff19a31",
-  // mainData: This can be JSON too.
+  // mainData: must be a string. If you want to send JSON stringify it.
   mainData: "Your main data.",
-  // keychainData: This can be JSON too.
+  // keychainData: must be a string. If you want to send JSON stringify it.
   keychainData: "Your keychain data.",
   // If omitted, it will be fetched from stellar-wallet server
   kdfParams: { 
