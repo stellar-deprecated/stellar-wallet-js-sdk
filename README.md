@@ -27,8 +27,8 @@ StellarWallet.createWallet({
   username: "joedoe@hostname.com",
   // Required
   password: "cat-walking-on-keyboard",
-  // Account public key
-  publicKey: "e335c4a9416edaa635156d3114e4a21c790c332732c5624f067f4f8a1ff19a31",
+  // Account public key, base64 encoded
+  publicKey: "RQQzVFQ96S/FiaAOyqOrXKjNV83W6OtTbUBaMewab1U=",
   // mainData: must be a string. If you want to send JSON stringify it.
   mainData: "Your main data.",
   // keychainData: must be a string. If you want to send JSON stringify it.
@@ -50,12 +50,11 @@ StellarWallet.createWallet({
 });
 ```
 
-To generate a Ed25519 keypair (so you have a `publicKey` to send) you can use Stellar's [`tweetnacl`](git+https://github.com/stellar/tweetnacl-js.git) lib:
+To generate a Ed25519 keypair (so you have a `publicKey` to send) you can use [tweetnacl](https://www.npmjs.org/package/tweetnacl) lib:
 ```js
-var seed = nacl.randomBytes(32);
-var keyPair = nacl.sign.keyPair.fromSeed(seed);
-var publicKey = keyPair.publicKey;
-var publicKeyHex = sjcl.codec.hex.fromBits(sjcl.codec.bytes.toBits(keyPair.publicKey));
+var keyPair = nacl.sign.keyPair();
+var publicKey = nacl.util.encodeBase64(keyPair.publicKey);
+var privateKey = nacl.util.encodeBase64(keyPair.secretKey);
 ```
 
 #### `getWallet`
@@ -77,6 +76,20 @@ StellarWallet.getWallet({
 }).catch(StellarWallet.errors.ConnectionError, function(e) {
   console.log('Connection error.')
 });
+```
+
+#### `util.generateTOTPKey`
+
+Generates TOTP key you can use in `setupTOTP`.
+
+#### `util.generateTOTPUri`
+
+Generates TOTP uri based on your key. You can encode it as a QR code and show to
+a user.
+
+```js
+var key = StellarWallet.util.generateTOTPKey();
+var uri = StellarWallet.util.generateTOTPUri(key);
 ```
 
 ### Wallet object

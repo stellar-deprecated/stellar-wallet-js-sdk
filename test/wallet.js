@@ -1,6 +1,7 @@
 'use strict';
 
 var _ = require('lodash');
+var crypto = require('../lib/util/crypto');
 var expect = require('chai').expect;
 var nacl = require('tweetnacl');
 var sjcl = require('../lib/util/sjcl');
@@ -22,9 +23,9 @@ describe('stellar-wallet', function () {
   var username = "joe"+Math.random()+"@hostname.org";
   var password = "my_passw0rd";
 
-  var seed = nacl.randomBytes(32);
-  var keyPair = nacl.sign.keyPair.fromSeed(seed);
-  var publicKeyHex = sjcl.codec.hex.fromBits(sjcl.codec.bytes.toBits(keyPair.publicKey));
+  var keyPair = nacl.sign.keyPair();
+  var publicKey = nacl.util.encodeBase64(keyPair.publicKey);
+  var privateKey = nacl.util.encodeBase64(keyPair.secretKey);
 
   var wallet;
 
@@ -33,7 +34,7 @@ describe('stellar-wallet', function () {
       server: server,
       username: username,
       password: password,
-      publicKey: publicKeyHex,
+      publicKey: publicKey,
       mainData: JSON.stringify(mainData),
       keychainData: JSON.stringify(keychainData),
       kdfParams: {
@@ -68,6 +69,18 @@ describe('stellar-wallet', function () {
       done();
     }).catch(function (err) {
       done(err);
+    });
+  });
+
+  it('should successfully setup TOTP for a wallet', function (done) {
+    var totpKey = StellarWallet.util.generateRandomTOTPKey();
+    wallet.setupTOTP({
+      totpKey: totpKey,
+      totpCode: '',
+      privateKey: privateKey
+    }).then(function(response) {
+      console.log(response);
+      done();
     });
   });
 });
