@@ -1,10 +1,11 @@
 'use strict';
 
 var _ = require('lodash');
+var base32 = require('thirty-two');
 var crypto = require('../lib/util/crypto');
 var expect = require('chai').expect;
 var nacl = require('tweetnacl');
-var sjcl = require('../lib/util/sjcl');
+var notp = require('notp');
 
 describe('stellar-wallet', function () {
   var StellarWallet = require('../index.js');
@@ -20,11 +21,10 @@ describe('stellar-wallet', function () {
     privateKey: "yyy"
   };
 
-  var username = "joe"+Math.random()+"@hostname.org";
+  var username = "joe"+crypto.sha1(Math.random().toString())+"@hostname.org";
   var password = "my_passw0rd";
 
   var keyPair = nacl.sign.keyPair();
-  var publicKey = nacl.util.encodeBase64(keyPair.publicKey);
   var privateKey = nacl.util.encodeBase64(keyPair.secretKey);
 
   var wallet;
@@ -34,7 +34,7 @@ describe('stellar-wallet', function () {
       server: server,
       username: username,
       password: password,
-      publicKey: publicKey,
+      privateKey: privateKey,
       mainData: JSON.stringify(mainData),
       keychainData: JSON.stringify(keychainData),
       kdfParams: {
@@ -46,10 +46,7 @@ describe('stellar-wallet', function () {
       }
     }).then(function(wallet) {
       expect(wallet.getServer()).to.be.equal(server);
-      expect(wallet.getServer()).to.be.equal(server);
       done();
-    }).catch(function (err) {
-      done(err);
     });
   });
 
@@ -57,7 +54,8 @@ describe('stellar-wallet', function () {
     StellarWallet.getWallet({
       server: server,
       username: username,
-      password: password
+      password: password,
+      privateKey: privateKey
     }).then(function(w) {
       wallet = w;
       var fetchedMainData = JSON.parse(wallet.getMainData());
@@ -67,19 +65,16 @@ describe('stellar-wallet', function () {
       expect(fetchedKeychainData).not.to.be.empty;
       expect(fetchedKeychainData).to.be.deep.equal(keychainData);
       done();
-    }).catch(function (err) {
-      done(err);
     });
   });
 
   it('should successfully setup TOTP for a wallet', function (done) {
     var totpKey = StellarWallet.util.generateRandomTOTPKey();
+    var totpCode = notp.totp.gen(base32.decode(totpKey), {});
     wallet.setupTOTP({
       totpKey: totpKey,
-      totpCode: '',
-      privateKey: privateKey
-    }).then(function(response) {
-      console.log(response);
+      totpCode: totpCode
+    }).then(function() {
       done();
     });
   });

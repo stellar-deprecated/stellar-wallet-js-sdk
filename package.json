@@ -24,6 +24,7 @@
     "gulp-uglify": "~0.3.1",
     "gulp-webpack": "~0.4.1",
     "mocha": "~1.17.1",
+    "notp": "^2.0.2",
     "run-sequence": "~0.3.6",
     "webpack": "~1.4.4"
   },
@@ -31,7 +32,7 @@
     "node": ">=0.10.0"
   },
   "scripts": {
-    "test": "mocha --recursive"
+    "test": "mocha --recursive --bail"
   },
   "repository": {
     "type" : "git",

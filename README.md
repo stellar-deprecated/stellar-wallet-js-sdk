@@ -27,8 +27,8 @@ StellarWallet.createWallet({
   username: "joedoe@hostname.com",
   // Required
   password: "cat-walking-on-keyboard",
-  // Account public key, base64 encoded
-  publicKey: "RQQzVFQ96S/FiaAOyqOrXKjNV83W6OtTbUBaMewab1U=",
+  // Account private key, base64 encoded.
+  privateKey: "dcpsxkXMIyuIGPE/RmK+Z4yQm+50fuRpA4vicJzp2cK32ZW0gQhdjvBRJflXrcvxHM6MCElLOmPzutNGJqFSLw==",
   // mainData: must be a string. If you want to send JSON stringify it.
   mainData: "Your main data.",
   // keychainData: must be a string. If you want to send JSON stringify it.
@@ -68,7 +68,9 @@ StellarWallet.getWallet({
   // Required
   username: "joedoe@hostname.com",
   // Required
-  password: "cat-walking-on-keyboard"
+  password: "cat-walking-on-keyboard",
+  // Account private key, base64 encoded.
+  privateKey: "dcpsxkXMIyuIGPE/RmK+Z4yQm+50fuRpA4vicJzp2cK32ZW0gQhdjvBRJflXrcvxHM6MCElLOmPzutNGJqFSLw=="
 }).then(function(wallet) {
   console.log(wallet.getMainData());
 }).catch(StellarWallet.errors.WalletNotFound, function(e) {
