@@ -69,9 +69,9 @@ describe('stellar-wallet', function () {
   });
 
   it('should successfully setup TOTP for a wallet', function (done) {
-    var totpKey = StellarWallet.util.generateRandomTOTPKey();
+    var totpKey = StellarWallet.util.generateRandomTotpKey();
     var totpCode = notp.totp.gen(base32.decode(totpKey), {});
-    wallet.setupTOTP({
+    wallet.setupTotp({
       totpKey: totpKey,
       totpCode: totpCode
     }).then(function() {
