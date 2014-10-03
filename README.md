@@ -79,6 +79,27 @@ StellarWallet.getWallet({
 });
 ```
 
+### Wallet object
+
+`getWallet` and `createWallet` methods return `Wallet` object. `Wallet` object
+has following methods:
+
+#### `getMainData`
+
+Returns `mainData` string.
+
+```js
+var mainData = wallet.getMainData();
+```
+
+#### `getKeychainData`
+
+Returns `keychainData` string.
+
+```js
+var keychainData = wallet.getKeychainData();
+```
+
 ### Build
 ```sh
 npm install
