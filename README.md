@@ -15,7 +15,7 @@ var StellarWallet = require('stellar-wallet-js-sdk');
 
 #### `createWallet`
 
-Creates a wallet and uploads it to `stellar-wallet` server.
+Creates a wallet and uploads it to [stellar-wallet](https://github.com/stellar/stellar-wallet) server.
 
 > **Heads up!** Choose `kdfParams` carefully - it may affect performance.
 
@@ -42,11 +42,15 @@ StellarWallet.createWallet({
     p: 1
   }
 }).then(function(wallet) {
-  //
+  // You can now perform operations on your wallet like setting up TOTP.
 }).catch(StellarWallet.errors.MissingField, function(e) {
   console.error('Missing field: '+e.field+'.');
+}).catch(StellarWallet.errors.InvalidField, function(e) {
+  console.error('Invalid field.');
 }).catch(StellarWallet.errors.ConnectionError, function(e) {
-  console.log('Connection error.')
+  console.log('Connection error.');
+}).catch(StellarWallet.errors.UnknownError, function(e) {
+  console.log('Unknown error.');
 });
 ```
 
@@ -59,7 +63,7 @@ var privateKey = nacl.util.encodeBase64(keyPair.secretKey);
 
 #### `getWallet`
 
-Retrieves a wallet from `stellar-wallet` server.
+Retrieves a wallet from [stellar-wallet](https://github.com/stellar/stellar-wallet) server.
 
 ```js
 StellarWallet.getWallet({
@@ -75,8 +79,14 @@ StellarWallet.getWallet({
   console.log(wallet.getMainData());
 }).catch(StellarWallet.errors.WalletNotFound, function(e) {
   console.error('Wallet not found.');
+}).catch(StellarWallet.errors.Forbidden, function(e) {
+  console.error('Forbidden access.');
+}).catch(StellarWallet.errors.TotpCodeRequired, function(e) {
+  console.error('Totp code required.');
 }).catch(StellarWallet.errors.ConnectionError, function(e) {
-  console.log('Connection error.')
+  console.log('Connection error.');
+}).catch(StellarWallet.errors.UnknownError, function(e) {
+  console.log('Unknown error.');
 });
 ```
 
@@ -113,6 +123,30 @@ Returns `keychainData` string.
 
 ```js
 var keychainData = wallet.getKeychainData();
+```
+
+#### `setupTotp`
+
+Setup TOTP to your wallet. To generate `totpKey` you can use:
+`StellarWallet.util.generateTotpKey()`. `totpCode` is a current code generated
+by user's TOTP app. It's task is to confirm a user has succesfully setup
+TOTP generator.
+
+```js
+var totpKey = StellarWallet.util.generateTotpKey();
+
+wallet.setupTotp({
+  totpKey: totpKey,
+  totpCode: totpCode
+}).then(function() {
+  // Everything went fine
+}).catch(StellarWallet.errors.InvalidTotpCode, function(e) {
+  console.error('Invalid Totp code.');
+}).catch(StellarWallet.errors.ConnectionError, function(e) {
+  console.log('Connection error.');
+}).catch(StellarWallet.errors.UnknownError, function(e) {
+  console.log('Unknown error.');
+});
 ```
 
 ### Build
