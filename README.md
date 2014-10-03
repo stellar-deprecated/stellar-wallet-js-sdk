@@ -80,18 +80,18 @@ StellarWallet.getWallet({
 });
 ```
 
-#### `util.generateTOTPKey`
+#### `util.generateTotpKey`
 
-Generates TOTP key you can use in `setupTOTP`.
+Generates Totp key you can use in `setupTotp`.
 
-#### `util.generateTOTPUri`
+#### `util.generateTotpUri`
 
-Generates TOTP uri based on your key. You can encode it as a QR code and show to
+Generates Totp uri based on your key. You can encode it as a QR code and show to
 a user.
 
 ```js
-var key = StellarWallet.util.generateTOTPKey();
-var uri = StellarWallet.util.generateTOTPUri(key);
+var key = StellarWallet.util.generateTotpKey();
+var uri = StellarWallet.util.generateTotpUri(key);
 ```
 
 ### Wallet object
