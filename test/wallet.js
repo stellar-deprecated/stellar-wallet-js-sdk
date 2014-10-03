@@ -1,3 +1,5 @@
+'use strict';
+
 var _ = require('lodash');
 var expect = require('chai').expect;
 var nacl = require('tweetnacl');
@@ -5,9 +7,8 @@ var sjcl = require('../lib/util/sjcl');
 
 describe('stellar-wallet', function () {
   var StellarWallet = require('../index.js');
-  StellarWallet.init({
-    server: 'http://localhost:3000/v2'
-  });
+
+  var server = 'http://localhost:3000/v2';
 
   var mainData = {
     key: 'val'
@@ -25,8 +26,11 @@ describe('stellar-wallet', function () {
   var keyPair = nacl.sign.keyPair.fromSeed(seed);
   var publicKeyHex = sjcl.codec.hex.fromBits(sjcl.codec.bytes.toBits(keyPair.publicKey));
 
+  var wallet;
+
   it('should successfully create wallet', function (done) {
     StellarWallet.createWallet({
+      server: server,
       username: username,
       password: password,
       publicKey: publicKeyHex,
@@ -40,7 +44,8 @@ describe('stellar-wallet', function () {
         p: 1
       }
     }).then(function(wallet) {
-      expect(wallet).to.deep.equal({status: 'success'});
+      expect(wallet.getServer()).to.be.equal(server);
+      expect(wallet.getServer()).to.be.equal(server);
       done();
     }).catch(function (err) {
       done(err);
@@ -48,16 +53,18 @@ describe('stellar-wallet', function () {
   });
 
   it('should successfully get wallet', function (done) {
-    StellarWallet.login({
+    StellarWallet.getWallet({
+      server: server,
       username: username,
       password: password
-    }).then(function(wallet) {
-      wallet = _.mapValues(wallet, JSON.parse);
-      expect(wallet.mainData).not.to.be.undefined;
-      expect(wallet.mainData).to.be.deep.equal(mainData);
-      expect(wallet.keychainData).not.to.be.undefined;
-      expect(wallet.keychainData).to.be.deep.equal(keychainData);
-      expect(wallet.lockVersion).to.be.equal(0);
+    }).then(function(w) {
+      wallet = w;
+      var fetchedMainData = JSON.parse(wallet.getMainData());
+      var fetchedKeychainData = JSON.parse(wallet.getKeychainData());
+      expect(fetchedMainData).not.to.be.empty;
+      expect(fetchedMainData).to.be.deep.equal(mainData);
+      expect(fetchedKeychainData).not.to.be.empty;
+      expect(fetchedKeychainData).to.be.deep.equal(keychainData);
       done();
     }).catch(function (err) {
       done(err);

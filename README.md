@@ -13,16 +13,6 @@ var StellarWallet = require('stellar-wallet-js-sdk');
 
 ### API
 
-#### `init`
-
-Initializes library.
-
-```js
-StellarWallet.init({
-  server: 'https://your-stellar-wallet-server.com'
-});
-```
-
 #### `createWallet`
 
 Creates a wallet and uploads it to `stellar-wallet` server.
@@ -31,7 +21,9 @@ Creates a wallet and uploads it to `stellar-wallet` server.
 
 ```js
 StellarWallet.createWallet({
-  // Requiredn
+  // Required
+  server: "https://wallet-server.com",
+  // Required
   username: "joedoe@hostname.com",
   // Required
   password: "cat-walking-on-keyboard",
@@ -64,6 +56,27 @@ var seed = nacl.randomBytes(32);
 var keyPair = nacl.sign.keyPair.fromSeed(seed);
 var publicKey = keyPair.publicKey;
 var publicKeyHex = sjcl.codec.hex.fromBits(sjcl.codec.bytes.toBits(keyPair.publicKey));
+```
+
+#### `getWallet`
+
+Retrieves a wallet from `stellar-wallet` server.
+
+```js
+StellarWallet.getWallet({
+  // Required
+  server: "https://wallet-server.com",
+  // Required
+  username: "joedoe@hostname.com",
+  // Required
+  password: "cat-walking-on-keyboard"
+}).then(function(wallet) {
+  console.log(wallet.getMainData());
+}).catch(StellarWallet.errors.WalletNotFound, function(e) {
+  console.error('Wallet not found.');
+}).catch(StellarWallet.errors.ConnectionError, function(e) {
+  console.log('Connection error.')
+});
 ```
 
 ### Build
