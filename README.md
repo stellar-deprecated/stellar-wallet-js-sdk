@@ -129,7 +129,7 @@ var keychainData = wallet.getKeychainData();
 
 Setup TOTP to your wallet. To generate `totpKey` you can use:
 `StellarWallet.util.generateTotpKey()`. `totpCode` is a current code generated
-by user's TOTP app. It's task is to confirm a user has succesfully setup
+by user's TOTP app. It's role is to confirm a user has succesfully setup
 TOTP generator.
 
 ```js
