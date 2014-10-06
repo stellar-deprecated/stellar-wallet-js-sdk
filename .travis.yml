@@ -13,5 +13,5 @@ before_script:
   - git checkout v2
   - npm install
   - NODE_ENV=test gulp db:setup
-  - forever start ./node_modules/stex/bin/stex www
+  - NODE_ENV=test forever start ./node_modules/stex/bin/stex www
   - cd ..
