@@ -5,7 +5,7 @@ services:
   - mysql
   - redis
 before_install:
-  - npm install -g gulp forever
+  - npm install -g forever
 before_script:
-  - cd node_modules/stellar-wallet && NODE_ENV=test gulp db:setup
-  - forever start ./node_modules/stex/bin/stex www
+  - git clone https://github.com/stellar/stellar-wallet.git
+  - cd stellar-wallet && git checkout v2 && npm install && NODE_ENV=test gulp db:setup && forever start ./node_modules/stex/bin/stex www
