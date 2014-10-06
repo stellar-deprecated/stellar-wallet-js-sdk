@@ -4,5 +4,11 @@
   "private": false,
   "main": "build/stellar-wallet.js",
   "dependencies": {},
-  "devDependencies": {}
+  "devDependencies": {},
+  "ignore": [
+    "/lib",
+    "/test",
+    "/index.js",
+    "/gulpfile.js"
+  ]
 }

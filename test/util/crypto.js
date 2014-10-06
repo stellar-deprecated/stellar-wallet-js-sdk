@@ -4,7 +4,7 @@ var expect = require('chai').expect;
 var crypto = require('../../lib/util/crypto');
 var sjcl = require('../../lib/util/sjcl');
 
-describe('crypto', function () {
+describe('util/crypto', function () {
   it('should correctly encrypt/decrypt data', function (done) {
     var key = sjcl.random.randomWords(8);
     var secret = 'this is secret data';

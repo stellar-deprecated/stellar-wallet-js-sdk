@@ -1,3 +1,6 @@
+> # :warning: Alpha version. Don't use in production.
+
+
 stellar-wallet-js-sdk
 =====================
 
@@ -101,7 +104,12 @@ a user.
 
 ```js
 var key = StellarWallet.util.generateTotpKey();
-var uri = StellarWallet.util.generateTotpUri(key);
+var uri = StellarWallet.util.generateTotpUri(key, {
+  // Your organization name
+  issuer: 'Stellar Development Foundation',
+  // Account name
+  accountName: 'bob@stellar.org'
+});
 ```
 
 ### Wallet object
