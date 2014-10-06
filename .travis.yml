@@ -1,0 +1,11 @@
+language: node_js
+node_js:
+  - "0.10"
+services:
+  - mysql
+  - redis
+before_install:
+  - npm install -g gulp forever
+before_script:
+  - cd node_modules/stellar-wallet && gulp db:setup
+  - forever start ./node_modules/stex/bin/stex www

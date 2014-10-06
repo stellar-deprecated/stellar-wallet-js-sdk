@@ -26,6 +26,7 @@
     "mocha": "~1.17.1",
     "notp": "^2.0.2",
     "run-sequence": "~0.3.6",
+    "stellar-wallet": "git+https://github.com/stellar/stellar-wallet.git#v2",
     "webpack": "~1.4.4"
   },
   "engines": {
