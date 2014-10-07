@@ -14,6 +14,9 @@ var notp = require('notp');
 chai.use(chaiAsPromised);
 
 describe('stellar-wallet', function () {
+  // Timeout increased because most of tests below connect to stellar-wallet
+  this.timeout(5000);
+
   var StellarWallet = require('../index.js');
 
   var server = 'http://localhost:3000/v2';
