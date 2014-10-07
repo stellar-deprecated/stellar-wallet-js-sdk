@@ -1,6 +1,8 @@
 'use strict';
 
-var expect = require('chai').expect;
+var chai = require("chai");
+var expect = chai.expect;
+var errors = require('../../lib/errors');
 var totp = require('../../lib/util/totp');
 var base32 = require('thirty-two');
 
@@ -23,6 +25,22 @@ describe('util/totp', function () {
       accountName: 'bob@stellar.org'
     });
     expect(uri).to.be.equal(expected);
+    done();
+  });
+
+  it('should throw MissingField error', function (done) {
+    var key = totp.generateRandomTotpKey();
+    var fn = function(meta) {
+      return function() {
+        totp.generateTotpUri(key, meta);
+      }
+    }
+    expect(fn({
+      issuer: 'Stellar Development Foundation'
+    })).to.throw(errors.MissingField);
+    expect(fn({
+      accountName: 'bob@stellar.org'
+    })).to.throw(errors.MissingField);
     done();
   });
 });
