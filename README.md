@@ -4,7 +4,7 @@
 stellar-wallet-js-sdk
 =====================
 
-[![Build Status](https://travis-ci.org/stellar/stellar-wallet-js-sdk.svg?branch=master)](https://travis-ci.org/stellar/stellar-wallet-js-sdk)
+[![Build Status](https://travis-ci.org/stellar/stellar-wallet-js-sdk.svg?branch=master)](https://travis-ci.org/stellar/stellar-wallet-js-sdk) [![Coverage Status][coveralls-image]][coveralls-url]
 
 ### Usage in a browser
 ```html
