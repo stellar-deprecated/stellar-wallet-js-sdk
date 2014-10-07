@@ -32,3 +32,9 @@ gulp.task('clean', function () {
 gulp.task('watch', ['build'], function() {
   gulp.watch('lib/**/*', ['build']);
 });
+
+gulp.task('submit-coverage', function(cb) {
+  return gulp
+      .src("./coverage/**/lcov.info")
+      .pipe(plugins.coveralls());
+});

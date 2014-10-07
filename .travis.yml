@@ -15,3 +15,7 @@ before_script:
   - NODE_ENV=test gulp db:setup
   - NODE_ENV=test forever start ./node_modules/stex/bin/stex www
   - cd ..
+script:
+  - npm run-script coverage
+after_script:
+  - gulp submit-coverage
