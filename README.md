@@ -4,6 +4,8 @@
 stellar-wallet-js-sdk
 =====================
 
+[![Build Status](https://travis-ci.org/stellar/stellar-wallet-js-sdk.svg?branch=master)](https://travis-ci.org/stellar/stellar-wallet-js-sdk)
+
 ### Usage in a browser
 ```html
 <script src="/build/stellar-wallet.js"></script>

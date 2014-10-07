@@ -68,6 +68,16 @@ describe('stellar-wallet', function () {
     });
   });
 
+  it('should return correct username', function (done) {
+    expect(wallet.getUsername()).to.be.deep.equal(username);
+    done();
+  });
+
+  it('should return correct server', function (done) {
+    expect(wallet.getServer()).to.be.deep.equal(server);
+    done();
+  });
+
   it('should successfully setup TOTP for a wallet', function (done) {
     var totpKey = StellarWallet.util.generateRandomTotpKey();
     var totpCode = notp.totp.gen(base32.decode(totpKey), {});
@@ -75,6 +85,24 @@ describe('stellar-wallet', function () {
       totpKey: totpKey,
       totpCode: totpCode
     }).then(function() {
+      done();
+    });
+  });
+
+  it('should successfully update wallet', function (done) {
+    var newMainData = 'newMainData';
+    var newKeychainData = 'newKeychainData';
+
+    wallet.update({
+      mainData: newMainData,
+      keychainData: newKeychainData
+    }).then(function() {
+      expect(wallet.getMainData()).not.to.be.empty;
+      expect(wallet.getMainData()).to.be.equal(newMainData);
+      expect(wallet.getKeychainData()).not.to.be.empty;
+      expect(wallet.getKeychainData()).to.be.equal(newKeychainData);
+
+      // TODO check login again
       done();
     });
   });
