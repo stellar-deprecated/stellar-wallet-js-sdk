@@ -14,9 +14,7 @@ describe('util/totp', function () {
     expect(decodedKey.length).to.be.equal(10);
     done();
   });
-});
 
-describe('util/totp', function () {
   it('should generate otpauth uri', function (done) {
     var key = totp.generateRandomTotpKey();
     var expected = 'otpauth://totp/Stellar%20Development%20Foundation:bob@stellar.org?secret='+key+'&issuer=Stellar%20Development%20Foundation';
@@ -33,8 +31,8 @@ describe('util/totp', function () {
     var fn = function(meta) {
       return function() {
         totp.generateTotpUri(key, meta);
-      }
-    }
+      };
+    };
     expect(fn({
       issuer: 'Stellar Development Foundation'
     })).to.throw(errors.MissingField);
