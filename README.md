@@ -32,12 +32,13 @@ StellarWallet.createWallet({
   username: "joedoe@hostname.com",
   // Required
   password: "cat-walking-on-keyboard",
-  // Account private key, base64 encoded.
-  privateKey: "dcpsxkXMIyuIGPE/RmK+Z4yQm+50fuRpA4vicJzp2cK32ZW0gQhdjvBRJflXrcvxHM6MCElLOmPzutNGJqFSLw==",
+  // Key pair, both keys base64 encoded
+  keyPair: {
+    publicKey: "WLM5f+YYuNmu+WACddpIynHzSAneR2OxF3gJeEjUI2M=",
+    secretKey: "tJ5gpV2SOomdwZi9CTpPb/b2PVNAdDWpm6yr5b+VwTpYszl/5hi42a75YAJ12kjKcfNICd5HY7EXeAl4SNQjYw=="
+  },
   // mainData: must be a string. If you want to send JSON stringify it.
   mainData: "Your main data.",
-  // keychainData: must be a string. If you want to send JSON stringify it.
-  keychainData: "Your keychain data.",
   // If omitted, it will be fetched from stellar-wallet server
   kdfParams: { 
     algorithm: 'scrypt',
@@ -59,12 +60,7 @@ StellarWallet.createWallet({
 });
 ```
 
-To generate a Ed25519 keypair (so you have a `publicKey` to send) you can use [tweetnacl](https://www.npmjs.org/package/tweetnacl) lib:
-```js
-var keyPair = nacl.sign.keyPair();
-var publicKey = nacl.util.encodeBase64(keyPair.publicKey);
-var privateKey = nacl.util.encodeBase64(keyPair.secretKey);
-```
+To generate a keypair use: `StellarWallet.util.generateKeychain()`.
 
 #### `getWallet`
 
@@ -77,11 +73,9 @@ StellarWallet.getWallet({
   // Required
   username: "joedoe@hostname.com",
   // Required
-  password: "cat-walking-on-keyboard",
-  // Account private key, base64 encoded.
-  privateKey: "dcpsxkXMIyuIGPE/RmK+Z4yQm+50fuRpA4vicJzp2cK32ZW0gQhdjvBRJflXrcvxHM6MCElLOmPzutNGJqFSLw=="
+  password: "cat-walking-on-keyboard"
 }).then(function(wallet) {
-  console.log(wallet.getMainData());
+  // wallet is Wallet object
 }).catch(StellarWallet.errors.WalletNotFound, function(e) {
   console.error('Wallet not found.');
 }).catch(StellarWallet.errors.Forbidden, function(e) {
@@ -113,6 +107,12 @@ var uri = StellarWallet.util.generateTotpUri(key, {
   accountName: 'bob@stellar.org'
 });
 ```
+
+#### `util.generateKeyPair`
+
+Generates and returns Ed25519 key pair object containing two properties:
+* `publicKey`
+* `secretKey`
 
 ### Wallet object
 

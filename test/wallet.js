@@ -5,7 +5,7 @@ var base32 = require('thirty-two');
 var chai = require("chai");
 var chaiAsPromised = require("chai-as-promised");
 var expect = chai.expect;
-var should = chai.should();
+chai.should();
 var crypto = require('../lib/util/crypto');
 var errors = require('../lib/errors');
 var nacl = require('tweetnacl');
@@ -21,23 +21,16 @@ describe('stellar-wallet', function () {
 
   var server = 'http://localhost:3000/v2';
 
+  var keyPair = StellarWallet.util.generateKeyPair();
+  var newKeyPair = StellarWallet.util.generateKeyPair();
+
   var mainData = {
     key: 'val'
   };
-
-  var keychainData = {
-    publicKey: "xxx",
-    privateKey: "yyy"
-  };
-
   var newMainData = 'newMainData';
-  var newKeychainData = 'newKeychainData';
 
   var username = "joe"+crypto.sha1(Math.random().toString())+"@hostname.org";
   var password = "my_passw0rd";
-
-  var keyPair = nacl.sign.keyPair();
-  var privateKey = nacl.util.encodeBase64(keyPair.secretKey);
 
   var totpKey = StellarWallet.util.generateRandomTotpKey();
 
@@ -46,8 +39,7 @@ describe('stellar-wallet', function () {
   it('should throw MissingField error', function (done) {
     StellarWallet.getWallet({
       username: username,
-      password: password,
-      privateKey: privateKey
+      password: password
     }).should.be.rejectedWith(errors.MissingField).and.notify(done);
   });
 
@@ -55,8 +47,7 @@ describe('stellar-wallet', function () {
     StellarWallet.getWallet({
       server: server,
       username: username,
-      password: password,
-      privateKey: privateKey
+      password: password
     }).should.be.rejectedWith(errors.WalletNotFound).and.notify(done);
   });
 
@@ -65,21 +56,17 @@ describe('stellar-wallet', function () {
       server: server,
       username: username,
       password: password,
-      privateKey: privateKey,
-      // mainData and keychainData must be strings
-      mainData: mainData,
-      keychainData: keychainData
+      mainData: mainData // mainData must be stringified
     }).should.be.rejectedWith(errors.InvalidField).and.notify(done);
   });
 
-  it('should successfully create wallet', function (done) {
+  it('should successfully create a wallet', function (done) {
     StellarWallet.createWallet({
       server: server,
       username: username,
       password: password,
-      privateKey: privateKey,
+      keyPair: keyPair,
       mainData: JSON.stringify(mainData),
-      keychainData: JSON.stringify(keychainData),
       kdfParams: {
         algorithm: 'scrypt',
         bits: 256,
@@ -97,8 +84,7 @@ describe('stellar-wallet', function () {
     StellarWallet.getWallet({
       server: server,
       username: username,
-      password: 'wrong password',
-      privateKey: privateKey
+      password: 'wrong password'
     }).should.be.rejectedWith(errors.Forbidden).and.notify(done);
   });
 
@@ -106,16 +92,22 @@ describe('stellar-wallet', function () {
     StellarWallet.getWallet({
       server: server,
       username: username,
-      password: password,
-      privateKey: privateKey
+      password: password
     }).then(function(w) {
       wallet = w;
       var fetchedMainData = JSON.parse(wallet.getMainData());
-      var fetchedKeychainData = JSON.parse(wallet.getKeychainData());
       expect(fetchedMainData).not.to.be.empty;
       expect(fetchedMainData).to.be.deep.equal(mainData);
-      expect(fetchedKeychainData).not.to.be.empty;
-      expect(fetchedKeychainData).to.be.deep.equal(keychainData);
+
+      // Check if message was signed with a keyPair
+      var message = 'test message';
+      var signature = wallet.signMessage(message);
+
+      message = nacl.util.decodeUTF8(message);
+      var expectedSignature = nacl.sign.detached(message, nacl.util.decodeBase64(keyPair.secretKey));
+      expectedSignature = nacl.util.encodeBase64(expectedSignature);
+      expect(signature).to.be.equal(expectedSignature);
+
       done();
     });
   });
@@ -153,12 +145,20 @@ describe('stellar-wallet', function () {
   it('should successfully send update wallet request and update wallet object', function (done) {
     wallet.update({
       mainData: newMainData,
-      keychainData: newKeychainData
+      keyPair: newKeyPair
     }).then(function() {
       expect(wallet.getMainData()).not.to.be.empty;
       expect(wallet.getMainData()).to.be.equal(newMainData);
-      expect(wallet.getKeychainData()).not.to.be.empty;
-      expect(wallet.getKeychainData()).to.be.equal(newKeychainData);
+
+      // Check if message was signed with a newKeyPair
+      var message = 'test message';
+      var signature = wallet.signMessage(message);
+
+      message = nacl.util.decodeUTF8(message);
+      var expectedSignature = nacl.sign.detached(message, nacl.util.decodeBase64(newKeyPair.secretKey));
+      expectedSignature = nacl.util.encodeBase64(expectedSignature);
+      expect(signature).to.be.equal(expectedSignature);
+
       done();
     });
   });
@@ -167,8 +167,7 @@ describe('stellar-wallet', function () {
     StellarWallet.getWallet({
       server: server,
       username: username,
-      password: password,
-      privateKey: privateKey
+      password: password
     }).should.be.rejectedWith(errors.TotpCodeRequired).and.notify(done);
   });
 
@@ -180,7 +179,6 @@ describe('stellar-wallet', function () {
       server: server,
       username: username,
       password: password,
-      privateKey: privateKey,
       totpCode: totpCode
     }).should.be.rejectedWith(errors.Forbidden).and.notify(done);
   });
@@ -191,13 +189,10 @@ describe('stellar-wallet', function () {
       server: server,
       username: username,
       password: password,
-      privateKey: privateKey,
       totpCode: totpCode
     }).then(function(wallet) {
       expect(wallet.getMainData()).not.to.be.empty;
       expect(wallet.getMainData()).to.be.equal(newMainData);
-      expect(wallet.getKeychainData()).not.to.be.empty;
-      expect(wallet.getKeychainData()).to.be.equal(newKeychainData);
       done();
     });
   });
