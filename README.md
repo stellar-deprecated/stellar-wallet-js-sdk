@@ -127,12 +127,14 @@ Returns `mainData` string.
 var mainData = wallet.getMainData();
 ```
 
-#### `getKeychainData`
+#### `getKeyPair`
 
-Returns `keychainData` string.
+Returns `keyPair`. Both keys will be base64 encoded.
 
 ```js
-var keychainData = wallet.getKeychainData();
+var keyPair = wallet.getKeyPair();
+var publicKey = keyPair.publicKey;
+var secretKey = keyPair.secretKey;
 ```
 
 #### `setupTotp`

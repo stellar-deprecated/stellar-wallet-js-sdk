@@ -99,6 +99,9 @@ describe('stellar-wallet', function () {
       expect(fetchedMainData).not.to.be.empty;
       expect(fetchedMainData).to.be.deep.equal(mainData);
 
+      expect(wallet.getKeyPair()).not.to.be.empty;
+      expect(wallet.getKeyPair()).to.be.deep.equal(keyPair);
+
       // Check if message was signed with a keyPair
       var message = 'test message';
       var signature = wallet.signMessage(message);
