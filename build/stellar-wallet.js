@@ -143,7 +143,7 @@ var StellarWallet =
 	    'rawWalletId',
 	    'rawWalletKey',
 	    'rawMainData',
-	    'rawKeyPair',
+	    'rawKeychainData',
 	    'lockVersion'
 	  ];
 
@@ -154,13 +154,6 @@ var StellarWallet =
 	  // rtrim /
 	  this.server = this.server.replace(/\/+$/g,'');
 	  this.walletId = sjcl.codec.base64.fromBits(this.rawWalletId);
-
-	  this.rawKeyPairBase64 = this.rawKeyPair;
-
-	  this.rawKeyPair = {
-	    publicKey: nacl.util.decodeBase64(this.rawKeyPair.publicKey),
-	    secretKey: nacl.util.decodeBase64(this.rawKeyPair.secretKey)
-	  };
 	}
 
 	Wallet.prototype.getServer = function() {
@@ -175,8 +168,8 @@ var StellarWallet =
 	  return this.rawMainData;
 	};
 
-	Wallet.prototype.getKeyPair = function() {
-	  return this.rawKeyPairBase64;
+	Wallet.prototype.getKeychainData = function() {
+	  return this.rawKeychainData;
 	};
 
 	Wallet.prototype.update = function(params) {
@@ -184,23 +177,15 @@ var StellarWallet =
 	    'server',
 	    'walletId',
 	    'lockVersion',
-	    'rawKeyPair',
 	    'rawWalletKey'
 	  ]));
-
-	  params.newKeyPair = params.keyPair;
-	  delete params.keyPair;
 
 	  var self = this;
 	  return protocol.updateWallet(params)
 	    .then(function(updateData) {
 	      self.lockVersion = updateData.newLockVersion;
 	      self.rawMainData = updateData.rawMainData;
-
-	      self.rawKeyPair = {
-	        publicKey: nacl.util.decodeBase64(updateData.rawKeyPair.publicKey),
-	        secretKey: nacl.util.decodeBase64(updateData.rawKeyPair.secretKey)
-	      };
+	      self.rawKeychainData = updateData.rawKeychainData;
 
 	      return Promise.resolve();
 	    });
@@ -213,8 +198,7 @@ var StellarWallet =
 	    'walletId',
 	    'totpKey',
 	    'totpCode',
-	    'lockVersion',
-	    'rawKeyPair'
+	    'lockVersion'
 	  ]));
 	  var self = this;
 	  return protocol.setupTotp(params)
@@ -222,12 +206,6 @@ var StellarWallet =
 	      self.lockVersion = updateData.newLockVersion;
 	      return Promise.resolve();
 	    });
-	};
-
-	Wallet.prototype.signMessage = function(message) {
-	  message = nacl.util.decodeUTF8(message);
-	  var signature = nacl.sign.detached(message, this.rawKeyPair.secretKey);
-	  return nacl.util.encodeBase64(signature);
 	};
 
 	module.exports = Wallet;
@@ -397,10 +375,11 @@ var StellarWallet =
 	  return (new Buffer(str, 'base64')).toString();
 	}
 
-	function signRequest(walletId, rawPrivateKey) {
+	function signRequest(walletId, secretKey) {
 	  return function(request) {
+	    var rawSecretKey = nacl.util.decodeBase64(secretKey);
 	    var serializedData = nacl.util.decodeUTF8(JSON.stringify(request._data));
-	    var signature = nacl.sign.detached(serializedData, rawPrivateKey);
+	    var signature = nacl.sign.detached(serializedData, rawSecretKey);
 	    signature = nacl.util.encodeBase64(signature);
 	    request.set('Authorization', 'STELLAR-WALLET-V2 wallet-id="'+walletId+'", signature="'+signature+'"');
 	  }
@@ -7675,8 +7654,9 @@ var StellarWallet =
 	    .then(validate.present("server"))
 	    .then(validate.present("username"))
 	    .then(validate.present("password"))
+	    .then(validate.string("publicKey"))
 	    .then(validate.string("mainData"))
-	    .then(validate.keyPair("keyPair"));
+	    .then(validate.string("keychainData"));
 	}
 
 	function getKdfParams(params) {
@@ -7719,11 +7699,8 @@ var StellarWallet =
 	  params.mainData = crypto.encryptData(params.mainData, walletKey);
 	  params.mainDataHash = crypto.sha1(params.mainData);
 
-	  params.rawKeyPair = params.keyPair;
-	  params.publicKey = params.keyPair.publicKey;
-	  params.keyPair = JSON.stringify(params.keyPair);
-
-	  params.keychainData = crypto.encryptData(params.keyPair, walletKey);
+	  params.rawKeychainData = params.keychainData;
+	  params.keychainData = crypto.encryptData(params.keychainData, walletKey);
 	  params.keychainDataHash = crypto.sha1(params.keychainData);
 
 	  return Promise.resolve(params);
@@ -7759,7 +7736,7 @@ var StellarWallet =
 	          'rawWalletId',
 	          'rawWalletKey',
 	          'rawMainData',
-	          'rawKeyPair'
+	          'rawKeychainData'
 	        ]);
 	        wallet.lockVersion = 0;
 	        resolver.resolve(wallet);
@@ -7931,11 +7908,12 @@ var StellarWallet =
 	    'rawWalletId',
 	    'rawWalletKey',
 	    'rawMainData',
+	    'rawKeychainData',
 	    'lockVersion'
 	  ]);
 
 	  wallet.rawMainData = crypto.decryptData(params.mainData, params.rawWalletKey);
-	  wallet.rawKeyPair = JSON.parse(crypto.decryptData(params.keychainData, params.rawWalletKey));
+	  wallet.rawKeychainData = crypto.decryptData(params.keychainData, params.rawWalletKey);
 
 	  return Promise.resolve(wallet);
 	}
@@ -7966,7 +7944,7 @@ var StellarWallet =
 	    .then(validate.present("server"))
 	    .then(validate.present("username"))
 	    .then(validate.present("walletId"))
-	    .then(validate.present("rawKeyPair"))
+	    .then(validate.present("secretKey"))
 	    .then(validate.present("totpKey"))
 	    .then(validate.present("totpCode"))
 	    .then(validate.number("lockVersion"));
@@ -7991,7 +7969,7 @@ var StellarWallet =
 	      'totpKey',
 	      'totpCode'
 	    ]))
-	    .use(crypto.signRequest(params.walletId, params.rawKeyPair.secretKey))
+	    .use(crypto.signRequest(params.walletId, params.secretKey))
 	    .end(function(err, res) {
 	      /* istanbul ignore if */
 	      if (err) {
@@ -8034,28 +8012,22 @@ var StellarWallet =
 
 	function validateParams(params) {
 	  return Promise.resolve(params)
-	      .then(validate.present("server"))
-	      .then(validate.present("walletId"))
-	      .then(validate.present("rawWalletKey"))
-	      .then(validate.present("mainData"))
-	      .then(validate.present("rawKeyPair"))
-	      .then(validate.keyPair("newKeyPair"))
-	      .then(validate.number("lockVersion"));
+	    .then(validate.present("server"))
+	    .then(validate.present("walletId"))
+	    .then(validate.present("rawWalletKey"))
+	    .then(validate.string("mainData"))
+	    .then(validate.string("keychainData"))
+	    .then(validate.string("secretKey"))
+	    .then(validate.number("lockVersion"));
 	}
-
-	var currentKeyPair;
 
 	function prepareDataToSend(params) {
 	  params.rawMainData = params.mainData;
 	  params.mainData = crypto.encryptData(params.mainData, params.rawWalletKey);
 	  params.mainDataHash = crypto.sha1(params.mainData);
 
-	  currentKeyPair = params.rawKeyPair;
-	  params.rawKeyPair = params.newKeyPair;
-	  params.publicKey = params.newKeyPair.publicKey;
-	  params.keyPair = JSON.stringify(params.newKeyPair);
-
-	  params.keychainData = crypto.encryptData(params.keyPair, params.rawWalletKey);
+	  params.rawKeychainData = params.keychainData;
+	  params.keychainData = crypto.encryptData(params.keychainData, params.rawWalletKey);
 	  params.keychainDataHash = crypto.sha1(params.keychainData);
 
 	  return Promise.resolve(params);
@@ -8076,13 +8048,13 @@ var StellarWallet =
 	      'keychainData',
 	      'keychainDataHash'
 	    ]))
-	    .use(crypto.signRequest(params.walletId, currentKeyPair.secretKey))
+	    .use(crypto.signRequest(params.walletId, params.secretKey))
 	    .end(function(err, res) {
 	      /* istanbul ignore if */
 	      if (err) {
 	        resolver.reject(new errors.ConnectionError());
 	      } else /* istanbul ignore else */ if (res.body.status === 'success') {
-	        var updateData = _.pick(params, ['rawMainData', 'rawKeyPair']);
+	        var updateData = _.pick(params, ['rawMainData', 'rawKeychainData']);
 	        updateData.newLockVersion = res.body.newLockVersion;
 	        resolver.resolve(updateData);
 	      } else {
@@ -8729,8 +8701,8 @@ var StellarWallet =
 	 */
 
 	var base64 = __webpack_require__(76)
-	var ieee754 = __webpack_require__(74)
-	var isArray = __webpack_require__(73)
+	var ieee754 = __webpack_require__(73)
+	var isArray = __webpack_require__(74)
 
 	exports.Buffer = Buffer
 	exports.SlowBuffer = Buffer
@@ -18940,45 +18912,6 @@ var StellarWallet =
 /* 73 */
 /***/ function(module, exports, __webpack_require__) {
 
-	
-	/**
-	 * isArray
-	 */
-
-	var isArray = Array.isArray;
-
-	/**
-	 * toString
-	 */
-
-	var str = Object.prototype.toString;
-
-	/**
-	 * Whether or not the given `val`
-	 * is an array.
-	 *
-	 * example:
-	 *
-	 *        isArray([]);
-	 *        // > true
-	 *        isArray(arguments);
-	 *        // > false
-	 *        isArray('');
-	 *        // > false
-	 *
-	 * @param {mixed} val
-	 * @return {bool}
-	 */
-
-	module.exports = isArray || function (val) {
-	  return !! val && '[object Array]' == str.call(val);
-	};
-
-
-/***/ },
-/* 74 */
-/***/ function(module, exports, __webpack_require__) {
-
 	exports.read = function(buffer, offset, isLE, mLen, nBytes) {
 	  var e, m,
 	      eLen = nBytes * 8 - mLen - 1,
@@ -19062,6 +18995,45 @@ var StellarWallet =
 	  for (; eLen > 0; buffer[offset + i] = e & 0xff, i += d, e /= 256, eLen -= 8);
 
 	  buffer[offset + i - d] |= s * 128;
+	};
+
+
+/***/ },
+/* 74 */
+/***/ function(module, exports, __webpack_require__) {
+
+	
+	/**
+	 * isArray
+	 */
+
+	var isArray = Array.isArray;
+
+	/**
+	 * toString
+	 */
+
+	var str = Object.prototype.toString;
+
+	/**
+	 * Whether or not the given `val`
+	 * is an array.
+	 *
+	 * example:
+	 *
+	 *        isArray([]);
+	 *        // > true
+	 *        isArray(arguments);
+	 *        // > false
+	 *        isArray('');
+	 *        // > false
+	 *
+	 * @param {mixed} val
+	 * @return {bool}
+	 */
+
+	module.exports = isArray || function (val) {
+	  return !! val && '[object Array]' == str.call(val);
 	};
 
 
@@ -21082,11 +21054,11 @@ var StellarWallet =
 	}
 
 	var Buffer = __webpack_require__(18).Buffer
-	var Hash   = __webpack_require__(93)(Buffer)
+	var Hash   = __webpack_require__(94)(Buffer)
 
-	exports.sha1 = __webpack_require__(94)(Buffer, Hash)
-	exports.sha256 = __webpack_require__(95)(Buffer, Hash)
-	exports.sha512 = __webpack_require__(96)(Buffer, Hash)
+	exports.sha1 = __webpack_require__(95)(Buffer, Hash)
+	exports.sha256 = __webpack_require__(96)(Buffer, Hash)
+	exports.sha512 = __webpack_require__(97)(Buffer, Hash)
 
 
 /***/ },
@@ -21095,7 +21067,7 @@ var StellarWallet =
 
 	var crypto = __webpack_require__(26)
 
-	var exportFn = __webpack_require__(97)
+	var exportFn = __webpack_require__(93)
 	var exported = exportFn(crypto)
 
 	module.exports = {
@@ -21563,6 +21535,97 @@ var StellarWallet =
 /* 93 */
 /***/ function(module, exports, __webpack_require__) {
 
+	/* WEBPACK VAR INJECTION */(function(Buffer) {module.exports = function(crypto) {
+	  function pbkdf2(password, salt, iterations, keylen, digest, callback) {
+	    if ('function' === typeof digest) {
+	      callback = digest
+	      digest = undefined
+	    }
+
+	    if ('function' !== typeof callback)
+	      throw new Error('No callback provided to pbkdf2')
+
+	    setTimeout(function() {
+	      var result
+
+	      try {
+	        result = pbkdf2Sync(password, salt, iterations, keylen, digest)
+	      } catch (e) {
+	        return callback(e)
+	      }
+
+	      callback(undefined, result)
+	    })
+	  }
+
+	  function pbkdf2Sync(password, salt, iterations, keylen, digest) {
+	    if ('number' !== typeof iterations)
+	      throw new TypeError('Iterations not a number')
+
+	    if (iterations < 0)
+	      throw new TypeError('Bad iterations')
+
+	    if ('number' !== typeof keylen)
+	      throw new TypeError('Key length not a number')
+
+	    if (keylen < 0)
+	      throw new TypeError('Bad key length')
+
+	    digest = digest || 'sha1'
+
+	    if (!Buffer.isBuffer(password)) password = new Buffer(password)
+	    if (!Buffer.isBuffer(salt)) salt = new Buffer(salt)
+
+	    var hLen, l = 1, r, T
+	    var DK = new Buffer(keylen)
+	    var block1 = new Buffer(salt.length + 4)
+	    salt.copy(block1, 0, 0, salt.length)
+
+	    for (var i = 1; i <= l; i++) {
+	      block1.writeUInt32BE(i, salt.length)
+
+	      var U = crypto.createHmac(digest, password).update(block1).digest()
+
+	      if (!hLen) {
+	        hLen = U.length
+	        T = new Buffer(hLen)
+	        l = Math.ceil(keylen / hLen)
+	        r = keylen - (l - 1) * hLen
+
+	        if (keylen > (Math.pow(2, 32) - 1) * hLen)
+	          throw new TypeError('keylen exceeds maximum length')
+	      }
+
+	      U.copy(T, 0, 0, hLen)
+
+	      for (var j = 1; j < iterations; j++) {
+	        U = crypto.createHmac(digest, password).update(U).digest()
+
+	        for (var k = 0; k < hLen; k++) {
+	          T[k] ^= U[k]
+	        }
+	      }
+
+	      var destPos = (i - 1) * hLen
+	      var len = (i == l ? r : hLen)
+	      T.copy(DK, destPos, 0, len)
+	    }
+
+	    return DK
+	  }
+
+	  return {
+	    pbkdf2: pbkdf2,
+	    pbkdf2Sync: pbkdf2Sync
+	  }
+	}
+	
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(18).Buffer))
+
+/***/ },
+/* 94 */
+/***/ function(module, exports, __webpack_require__) {
+
 	module.exports = function (Buffer) {
 
 	  //prototype class for hash functions
@@ -21643,7 +21706,7 @@ var StellarWallet =
 
 
 /***/ },
-/* 94 */
+/* 95 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/*
@@ -21787,7 +21850,7 @@ var StellarWallet =
 
 
 /***/ },
-/* 95 */
+/* 96 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
@@ -21940,7 +22003,7 @@ var StellarWallet =
 
 
 /***/ },
-/* 96 */
+/* 97 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var inherits = __webpack_require__(17).inherits
@@ -22188,97 +22251,6 @@ var StellarWallet =
 
 	}
 
-
-/***/ },
-/* 97 */
-/***/ function(module, exports, __webpack_require__) {
-
-	/* WEBPACK VAR INJECTION */(function(Buffer) {module.exports = function(crypto) {
-	  function pbkdf2(password, salt, iterations, keylen, digest, callback) {
-	    if ('function' === typeof digest) {
-	      callback = digest
-	      digest = undefined
-	    }
-
-	    if ('function' !== typeof callback)
-	      throw new Error('No callback provided to pbkdf2')
-
-	    setTimeout(function() {
-	      var result
-
-	      try {
-	        result = pbkdf2Sync(password, salt, iterations, keylen, digest)
-	      } catch (e) {
-	        return callback(e)
-	      }
-
-	      callback(undefined, result)
-	    })
-	  }
-
-	  function pbkdf2Sync(password, salt, iterations, keylen, digest) {
-	    if ('number' !== typeof iterations)
-	      throw new TypeError('Iterations not a number')
-
-	    if (iterations < 0)
-	      throw new TypeError('Bad iterations')
-
-	    if ('number' !== typeof keylen)
-	      throw new TypeError('Key length not a number')
-
-	    if (keylen < 0)
-	      throw new TypeError('Bad key length')
-
-	    digest = digest || 'sha1'
-
-	    if (!Buffer.isBuffer(password)) password = new Buffer(password)
-	    if (!Buffer.isBuffer(salt)) salt = new Buffer(salt)
-
-	    var hLen, l = 1, r, T
-	    var DK = new Buffer(keylen)
-	    var block1 = new Buffer(salt.length + 4)
-	    salt.copy(block1, 0, 0, salt.length)
-
-	    for (var i = 1; i <= l; i++) {
-	      block1.writeUInt32BE(i, salt.length)
-
-	      var U = crypto.createHmac(digest, password).update(block1).digest()
-
-	      if (!hLen) {
-	        hLen = U.length
-	        T = new Buffer(hLen)
-	        l = Math.ceil(keylen / hLen)
-	        r = keylen - (l - 1) * hLen
-
-	        if (keylen > (Math.pow(2, 32) - 1) * hLen)
-	          throw new TypeError('keylen exceeds maximum length')
-	      }
-
-	      U.copy(T, 0, 0, hLen)
-
-	      for (var j = 1; j < iterations; j++) {
-	        U = crypto.createHmac(digest, password).update(U).digest()
-
-	        for (var k = 0; k < hLen; k++) {
-	          T[k] ^= U[k]
-	        }
-	      }
-
-	      var destPos = (i - 1) * hLen
-	      var len = (i == l ? r : hLen)
-	      T.copy(DK, destPos, 0, len)
-	    }
-
-	    return DK
-	  }
-
-	  return {
-	    pbkdf2: pbkdf2,
-	    pbkdf2Sync: pbkdf2Sync
-	  }
-	}
-	
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(18).Buffer))
 
 /***/ }
 /******/ ])

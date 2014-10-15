@@ -32,13 +32,12 @@ StellarWallet.createWallet({
   username: "joedoe@hostname.com",
   // Required
   password: "cat-walking-on-keyboard",
-  // Key pair, both keys base64 encoded
-  keyPair: {
-    publicKey: "WLM5f+YYuNmu+WACddpIynHzSAneR2OxF3gJeEjUI2M=",
-    secretKey: "tJ5gpV2SOomdwZi9CTpPb/b2PVNAdDWpm6yr5b+VwTpYszl/5hi42a75YAJ12kjKcfNICd5HY7EXeAl4SNQjYw=="
-  },
+  // Public key, base64 encoded
+  publicKey: "WLM5f+YYuNmu+WACddpIynHzSAneR2OxF3gJeEjUI2M=",
   // mainData: must be a string. If you want to send JSON stringify it.
   mainData: "Your main data.",
+  // keychainData: must be a string. If you want to send JSON stringify it.
+  keychainData: "Your keychain data.",
   // If omitted, it will be fetched from stellar-wallet server
   kdfParams: { 
     algorithm: 'scrypt',
@@ -127,16 +126,9 @@ Returns `mainData` string.
 var mainData = wallet.getMainData();
 ```
 
-#### `getKeyPair`
+#### `getKeychainData`
 
-Returns `keyPair`. Both keys will be base64 encoded.
-
-```js
-var keyPair = wallet.getKeyPair();
-var publicKey = keyPair.publicKey;
-var secretKey = keyPair.secretKey;
-var address = keyPair.address;
-```
+Returns `keychainData` string.
 
 #### `setupTotp`
 
@@ -150,7 +142,8 @@ var totpKey = StellarWallet.util.generateTotpKey();
 
 wallet.setupTotp({
   totpKey: totpKey,
-  totpCode: totpCode
+  totpCode: totpCode,
+  secretKey: "tJ5gpV2SOomdwZi9CTpPb/b2PVNAdDWpm6yr5b+VwTpYszl/5hi42a75YAJ12kjKcfNICd5HY7EXeAl4SNQjYw=="
 }).then(function() {
   // Everything went fine
 }).catch(StellarWallet.errors.InvalidTotpCode, function(e) {

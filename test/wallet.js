@@ -65,7 +65,8 @@ describe('stellar-wallet', function () {
       server: server,
       username: username,
       password: password,
-      keyPair: keyPair,
+      publicKey: keyPair.publicKey,
+      keychainData: JSON.stringify(keyPair),
       mainData: JSON.stringify(mainData),
       kdfParams: {
         algorithm: 'scrypt',
@@ -99,17 +100,9 @@ describe('stellar-wallet', function () {
       expect(fetchedMainData).not.to.be.empty;
       expect(fetchedMainData).to.be.deep.equal(mainData);
 
-      expect(wallet.getKeyPair()).not.to.be.empty;
-      expect(wallet.getKeyPair()).to.be.deep.equal(keyPair);
-
-      // Check if message was signed with a keyPair
-      var message = 'test message';
-      var signature = wallet.signMessage(message);
-
-      message = nacl.util.decodeUTF8(message);
-      var expectedSignature = nacl.sign.detached(message, nacl.util.decodeBase64(keyPair.secretKey));
-      expectedSignature = nacl.util.encodeBase64(expectedSignature);
-      expect(signature).to.be.equal(expectedSignature);
+      var fetchedKeychainData = JSON.parse(wallet.getKeychainData());
+      expect(fetchedKeychainData).not.to.be.empty;
+      expect(fetchedKeychainData).to.be.deep.equal(keyPair);
 
       done();
     });
@@ -131,7 +124,8 @@ describe('stellar-wallet', function () {
 
     wallet.setupTotp({
       totpKey: totpKey,
-      totpCode: totpCode
+      totpCode: totpCode,
+      secretKey: keyPair.secretKey
     }).should.be.rejectedWith(errors.InvalidTotpCode).and.notify(done);
   });
 
@@ -139,7 +133,8 @@ describe('stellar-wallet', function () {
     var totpCode = notp.totp.gen(base32.decode(totpKey), {});
     wallet.setupTotp({
       totpKey: totpKey,
-      totpCode: totpCode
+      totpCode: totpCode,
+      secretKey: keyPair.secretKey
     }).then(function() {
       done();
     });
@@ -148,19 +143,14 @@ describe('stellar-wallet', function () {
   it('should successfully send update wallet request and update wallet object', function (done) {
     wallet.update({
       mainData: newMainData,
-      keyPair: newKeyPair
+      keychainData: JSON.stringify(newKeyPair),
+      secretKey: keyPair.secretKey
     }).then(function() {
       expect(wallet.getMainData()).not.to.be.empty;
       expect(wallet.getMainData()).to.be.equal(newMainData);
 
-      // Check if message was signed with a newKeyPair
-      var message = 'test message';
-      var signature = wallet.signMessage(message);
-
-      message = nacl.util.decodeUTF8(message);
-      var expectedSignature = nacl.sign.detached(message, nacl.util.decodeBase64(newKeyPair.secretKey));
-      expectedSignature = nacl.util.encodeBase64(expectedSignature);
-      expect(signature).to.be.equal(expectedSignature);
+      expect(wallet.getKeychainData()).not.to.be.empty;
+      expect(wallet.getKeychainData()).to.be.equal(JSON.stringify(newKeyPair));
 
       done();
     });
@@ -196,6 +186,9 @@ describe('stellar-wallet', function () {
     }).then(function(wallet) {
       expect(wallet.getMainData()).not.to.be.empty;
       expect(wallet.getMainData()).to.be.equal(newMainData);
+
+      expect(wallet.getKeychainData()).not.to.be.empty;
+      expect(wallet.getKeychainData()).to.be.equal(JSON.stringify(newKeyPair));
       done();
     });
   });
