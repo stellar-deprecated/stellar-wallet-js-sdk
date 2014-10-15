@@ -135,6 +135,7 @@ Returns `keyPair`. Both keys will be base64 encoded.
 var keyPair = wallet.getKeyPair();
 var publicKey = keyPair.publicKey;
 var secretKey = keyPair.secretKey;
+var address = keyPair.address;
 ```
 
 #### `setupTotp`

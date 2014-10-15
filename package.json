@@ -9,8 +9,10 @@
     "bluebird": "~2.3.4",
     "camel-case": "~1.0.2",
     "lodash": "~2.4.1",
+    "ripemd160": "~0.2.0",
     "sjcl": "git+https://github.com/stellar/sjcl.git",
     "sjcl-scrypt": "git+https://github.com/stellar/sjcl-scrypt.git",
+    "stellar-lib": "0.9.6",
     "superagent": "~0.20.0",
     "thirty-two": "~0.0.2",
     "tweetnacl": "^0.11.2"
