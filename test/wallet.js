@@ -1,23 +1,21 @@
 'use strict';
 
-var _ = require('lodash');
-var base32 = require('thirty-two');
-var chai = require("chai");
-var chaiAsPromised = require("chai-as-promised");
+if (typeof window === 'undefined') {
+  var base32 = require('thirty-two');
+  var chai = require("chai");
+  var chaiAsPromised = require("chai-as-promised");
+  var nacl = require('tweetnacl');
+  var notp = require('notp');
+  var StellarWallet = require('../index.js');
+}
+
 var expect = chai.expect;
 chai.should();
-var crypto = require('../lib/util/crypto');
-var errors = require('../lib/errors');
-var nacl = require('tweetnacl');
-var notp = require('notp');
-
 chai.use(chaiAsPromised);
 
 describe('stellar-wallet', function () {
   // Timeout increased because most of tests below connect to stellar-wallet
   this.timeout(5000);
-
-  var StellarWallet = require('../index.js');
 
   var server = 'http://localhost:3000/v2';
 
@@ -29,7 +27,7 @@ describe('stellar-wallet', function () {
   };
   var newMainData = 'newMainData';
 
-  var username = "joe"+crypto.sha1(Math.random().toString())+"@hostname.org";
+  var username = "joe"+Math.random().toString()+"@hostname.org";
   var password = "my_passw0rd";
 
   var totpKey = StellarWallet.util.generateRandomTotpKey();
@@ -40,7 +38,7 @@ describe('stellar-wallet', function () {
     StellarWallet.getWallet({
       username: username,
       password: password
-    }).should.be.rejectedWith(errors.MissingField).and.notify(done);
+    }).should.be.rejectedWith(StellarWallet.errors.MissingField).and.notify(done);
   });
 
   it('should throw WalletNotFound error', function (done) {
@@ -48,7 +46,7 @@ describe('stellar-wallet', function () {
       server: server,
       username: username,
       password: password
-    }).should.be.rejectedWith(errors.WalletNotFound).and.notify(done);
+    }).should.be.rejectedWith(StellarWallet.errors.WalletNotFound).and.notify(done);
   });
 
   it('should throw InvalidField error', function (done) {
@@ -57,7 +55,7 @@ describe('stellar-wallet', function () {
       username: username,
       password: password,
       mainData: mainData // mainData must be stringified
-    }).should.be.rejectedWith(errors.InvalidField).and.notify(done);
+    }).should.be.rejectedWith(StellarWallet.errors.InvalidField).and.notify(done);
   });
 
   it('should successfully create a wallet', function (done) {
@@ -86,7 +84,7 @@ describe('stellar-wallet', function () {
       server: server,
       username: username,
       password: 'wrong password'
-    }).should.be.rejectedWith(errors.Forbidden).and.notify(done);
+    }).should.be.rejectedWith(StellarWallet.errors.Forbidden).and.notify(done);
   });
 
   it('should successfully get wallet', function (done) {
@@ -118,20 +116,20 @@ describe('stellar-wallet', function () {
     done();
   });
 
-  it('should throw InvalidTotpCode error while setupTotp because of invalid TOTP code', function (done) {
+  it('should throw InvalidTotpCode error while enableTotp because of invalid TOTP code', function (done) {
     var totpCode = notp.totp.gen(base32.decode(totpKey), {});
     totpCode = ((parseInt(totpCode[0]) + 1) % 10).toString()+totpCode.substr(1);
 
-    wallet.setupTotp({
+    wallet.enableTotp({
       totpKey: totpKey,
       totpCode: totpCode,
       secretKey: keyPair.secretKey
-    }).should.be.rejectedWith(errors.InvalidTotpCode).and.notify(done);
+    }).should.be.rejectedWith(StellarWallet.errors.InvalidTotpCode).and.notify(done);
   });
 
-  it('should successfully setup TOTP for a wallet', function (done) {
+  it('should successfully enable TOTP for a wallet', function (done) {
     var totpCode = notp.totp.gen(base32.decode(totpKey), {});
-    wallet.setupTotp({
+    wallet.enableTotp({
       totpKey: totpKey,
       totpCode: totpCode,
       secretKey: keyPair.secretKey
@@ -161,7 +159,7 @@ describe('stellar-wallet', function () {
       server: server,
       username: username,
       password: password
-    }).should.be.rejectedWith(errors.TotpCodeRequired).and.notify(done);
+    }).should.be.rejectedWith(StellarWallet.errors.TotpCodeRequired).and.notify(done);
   });
 
   it('should throw Forbidden error because of invalid TOTP code', function (done) {
@@ -173,7 +171,7 @@ describe('stellar-wallet', function () {
       username: username,
       password: password,
       totpCode: totpCode
-    }).should.be.rejectedWith(errors.Forbidden).and.notify(done);
+    }).should.be.rejectedWith(StellarWallet.errors.Forbidden).and.notify(done);
   });
 
   it('should get wallet with TOTP required', function (done) {
@@ -183,6 +181,31 @@ describe('stellar-wallet', function () {
       username: username,
       password: password,
       totpCode: totpCode
+    }).then(function(wallet) {
+      expect(wallet.getMainData()).not.to.be.empty;
+      expect(wallet.getMainData()).to.be.equal(newMainData);
+
+      expect(wallet.getKeychainData()).not.to.be.empty;
+      expect(wallet.getKeychainData()).to.be.equal(JSON.stringify(newKeyPair));
+      done();
+    });
+  });
+
+  it('should successfully disable TOTP for a wallet', function (done) {
+    var totpCode = notp.totp.gen(base32.decode(totpKey), {});
+    wallet.disableTotp({
+      totpCode: totpCode,
+      secretKey: keyPair.secretKey
+    }).then(function() {
+      done();
+    });
+  });
+
+  it('should get wallet without TOTP code after disabling TOTP', function (done) {
+    StellarWallet.getWallet({
+      server: server,
+      username: username,
+      password: password
     }).then(function(wallet) {
       expect(wallet.getMainData()).not.to.be.empty;
       expect(wallet.getMainData()).to.be.equal(newMainData);
