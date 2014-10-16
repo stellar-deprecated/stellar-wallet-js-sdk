@@ -75,6 +75,7 @@ describe('stellar-wallet', function () {
       }
     }).then(function(wallet) {
       expect(wallet.getServer()).to.be.equal(server);
+      expect(wallet.isTotpEnabled()).to.be.false;
       done();
     });
   });
@@ -101,6 +102,8 @@ describe('stellar-wallet', function () {
       var fetchedKeychainData = JSON.parse(wallet.getKeychainData());
       expect(fetchedKeychainData).not.to.be.empty;
       expect(fetchedKeychainData).to.be.deep.equal(keyPair);
+
+      expect(wallet.isTotpEnabled()).to.be.false;
 
       done();
     });
@@ -134,6 +137,7 @@ describe('stellar-wallet', function () {
       totpCode: totpCode,
       secretKey: keyPair.secretKey
     }).then(function() {
+      expect(wallet.isTotpEnabled()).to.be.true;
       done();
     });
   });
@@ -187,6 +191,8 @@ describe('stellar-wallet', function () {
 
       expect(wallet.getKeychainData()).not.to.be.empty;
       expect(wallet.getKeychainData()).to.be.equal(JSON.stringify(newKeyPair));
+
+      expect(wallet.isTotpEnabled()).to.be.true;
       done();
     });
   });
@@ -197,6 +203,7 @@ describe('stellar-wallet', function () {
       totpCode: totpCode,
       secretKey: keyPair.secretKey
     }).then(function() {
+      expect(wallet.isTotpEnabled()).to.be.false;
       done();
     });
   });
@@ -212,6 +219,8 @@ describe('stellar-wallet', function () {
 
       expect(wallet.getKeychainData()).not.to.be.empty;
       expect(wallet.getKeychainData()).to.be.equal(JSON.stringify(newKeyPair));
+
+      expect(wallet.isTotpEnabled()).to.be.false;
       done();
     });
   });
