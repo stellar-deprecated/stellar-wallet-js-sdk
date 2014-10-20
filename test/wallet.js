@@ -197,6 +197,16 @@ describe('stellar-wallet', function () {
     });
   });
 
+  it('should send TOTP lost device request', function (done) {
+    StellarWallet.lostTotpDevice({
+      server: server,
+      username: username,
+      password: password
+    }).then(function() {
+      done();
+    });
+  });
+
   it('should successfully disable TOTP for a wallet', function (done) {
     var totpCode = notp.totp.gen(base32.decode(totpKey), {});
     wallet.disableTotp({
