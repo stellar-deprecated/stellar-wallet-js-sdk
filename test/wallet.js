@@ -14,7 +14,7 @@ chai.should();
 chai.use(chaiAsPromised);
 
 describe('stellar-wallet', function () {
-  // Timeout increased because most of tests below connect to stellar-wallet
+  // Timeout increased because majority of tests below connect to stellar-wallet
   this.timeout(5000);
 
   var server = 'http://localhost:3000/v2';
@@ -78,6 +78,24 @@ describe('stellar-wallet', function () {
       expect(wallet.isTotpEnabled()).to.be.false;
       done();
     });
+  });
+
+  it('should fail with UsernameAlreadyTaken error', function (done) {
+    StellarWallet.createWallet({
+      server: server,
+      username: username,
+      password: password,
+      publicKey: keyPair.publicKey,
+      keychainData: JSON.stringify(keyPair),
+      mainData: JSON.stringify(mainData),
+      kdfParams: {
+        algorithm: 'scrypt',
+        bits: 256,
+        n: Math.pow(2,11), // To make tests faster
+        r: 8,
+        p: 1
+      }
+    }).should.be.rejectedWith(StellarWallet.errors.UsernameAlreadyTaken).and.notify(done);
   });
 
   it('should throw Forbidden error', function (done) {
@@ -233,5 +251,36 @@ describe('stellar-wallet', function () {
       expect(wallet.isTotpEnabled()).to.be.false;
       done();
     });
+  });
+
+  var Kr; // Recovery key
+  it('should enable recovery', function (done) {
+    wallet.enableRecovery({
+      secretKey: keyPair.secretKey
+    }).then(function(recoveryKey) {
+      expect(recoveryKey.length).to.be.equal(16);
+      Kr = recoveryKey;
+      done();
+    });
+  });
+
+  it('should get walletId and walletKey using recoveryKey', function (done) {
+    StellarWallet.recover({
+      server: server,
+      username: username,
+      recoveryKey: Kr
+    }).then(function(data) {
+      expect(data.walletId).to.be.equal(wallet.getWalletId());
+      expect(data.walletKey).to.be.equal(wallet.getWalletKey());
+      done();
+    });
+  });
+
+  it('should throw Forbidden when invalid recoveryKey is passed', function (done) {
+    StellarWallet.recover({
+      server: server,
+      username: username,
+      recoveryKey: "abc"
+    }).should.be.rejectedWith(StellarWallet.errors.Forbidden).and.notify(done);
   });
 });
