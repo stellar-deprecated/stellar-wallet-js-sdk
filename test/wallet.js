@@ -161,20 +161,18 @@ describe('stellar-wallet', function () {
   });
 
   it('should successfully send update wallet request and update wallet object', function (done) {
-    wallet.update({
+    wallet.updateMainData({
       mainData: newMainData,
-      keychainData: JSON.stringify(newKeyPair),
       secretKey: keyPair.secretKey
     }).then(function() {
       expect(wallet.getMainData()).not.to.be.empty;
       expect(wallet.getMainData()).to.be.equal(newMainData);
 
-      expect(wallet.getKeychainData()).not.to.be.empty;
-      expect(wallet.getKeychainData()).to.be.equal(JSON.stringify(newKeyPair));
-
       done();
     });
   });
+
+  it('should successfully send update password and update wallet object');
 
   it('should throw TotpCodeRequired error', function (done) {
     StellarWallet.getWallet({
@@ -206,9 +204,6 @@ describe('stellar-wallet', function () {
     }).then(function(wallet) {
       expect(wallet.getMainData()).not.to.be.empty;
       expect(wallet.getMainData()).to.be.equal(newMainData);
-
-      expect(wallet.getKeychainData()).not.to.be.empty;
-      expect(wallet.getKeychainData()).to.be.equal(JSON.stringify(newKeyPair));
 
       expect(wallet.isTotpEnabled()).to.be.true;
       done();
@@ -245,9 +240,6 @@ describe('stellar-wallet', function () {
       expect(wallet.getMainData()).not.to.be.empty;
       expect(wallet.getMainData()).to.be.equal(newMainData);
 
-      expect(wallet.getKeychainData()).not.to.be.empty;
-      expect(wallet.getKeychainData()).to.be.equal(JSON.stringify(newKeyPair));
-
       expect(wallet.isTotpEnabled()).to.be.false;
       done();
     });
@@ -264,6 +256,15 @@ describe('stellar-wallet', function () {
     });
   });
 
+  it('should throw Forbidden when invalid recoveryKey is passed', function (done) {
+    StellarWallet.recover({
+      server: server,
+      username: username,
+      recoveryKey: "abc"
+    }).should.be.rejectedWith(StellarWallet.errors.Forbidden).and.notify(done);
+  });
+
+  var recoveredData;
   it('should get walletId and walletKey using recoveryKey', function (done) {
     StellarWallet.recover({
       server: server,
@@ -272,15 +273,48 @@ describe('stellar-wallet', function () {
     }).then(function(data) {
       expect(data.walletId).to.be.equal(wallet.getWalletId());
       expect(data.walletKey).to.be.equal(wallet.getWalletKey());
+      recoveredData = data;
       done();
     });
   });
 
-  it('should throw Forbidden when invalid recoveryKey is passed', function (done) {
-    StellarWallet.recover({
+  it('should get wallet object using recoveryData, change password and get wallet using new password', function (done) {
+    var newPassword = 'newPassword';
+
+    StellarWallet.getWallet({
       server: server,
       username: username,
-      recoveryKey: "abc"
-    }).should.be.rejectedWith(StellarWallet.errors.Forbidden).and.notify(done);
+      walletId: recoveredData.walletId,
+      walletKey: recoveredData.walletKey
+    }).then(function(w) {
+      expect(w.getWalletId()).to.be.equal(wallet.getWalletId());
+      expect(w.getWalletKey()).to.be.equal(wallet.getWalletKey());
+      expect(w.getMainData()).to.be.equal(newMainData);
+      expect(w.getKeychainData()).to.be.equal(JSON.stringify(keyPair));
+      return w;
+    }).then(function(w) {
+      return w.changePassword({
+        newPassword: newPassword,
+        secretKey: keyPair.secretKey,
+        kdfParams: {
+          algorithm: 'scrypt',
+          bits: 256,
+          n: Math.pow(2,11), // To make tests faster
+          r: 8,
+          p: 1
+        }
+      });
+    }).then(function() {
+      return StellarWallet.getWallet({
+        server: server,
+        username: username,
+        password: newPassword
+      }).then(function(w) {
+        expect(w.getWalletId()).not.to.be.equal(wallet.getWalletId());
+        expect(w.getWalletKey()).not.to.be.equal(wallet.getWalletKey());
+        expect(w.getMainData()).to.be.equal(newMainData);
+        expect(w.getKeychainData()).to.be.equal(JSON.stringify(keyPair));
+      });
+    }).should.be.fulfilled.and.notify(done);
   });
 });
