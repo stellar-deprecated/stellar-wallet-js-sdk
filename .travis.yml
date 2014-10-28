@@ -10,10 +10,10 @@ before_install:
 before_script:
   - git clone https://github.com/stellar/stellar-wallet.git
   - cd stellar-wallet
-  - git checkout v2
+  - git checkout master
   - npm install
-  - NODE_ENV=test gulp db:setup
-  - NODE_ENV=test forever start ./node_modules/stex/bin/stex www
+  - NODE_ENV=development gulp db:setup
+  - NODE_ENV=development forever start ./node_modules/stex/bin/stex www
   - cd ..
 script:
   - npm run-script coverage
