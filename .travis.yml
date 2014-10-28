@@ -17,5 +17,5 @@ before_script:
   - cd ..
 script:
   - npm run-script coverage
-after_script:
+after_success:
   - gulp submit-coverage

@@ -250,7 +250,8 @@ describe('stellar-wallet', function () {
     wallet.enableRecovery({
       secretKey: keyPair.secretKey
     }).then(function(recoveryKey) {
-      expect(recoveryKey.length).to.be.equal(16);
+      expect(recoveryKey.length).not.to.be.undefined;
+      expect(recoveryKey.length).not.to.be.null;
       Kr = recoveryKey;
       done();
     });
