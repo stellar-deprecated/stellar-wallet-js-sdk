@@ -245,36 +245,34 @@ describe('stellar-wallet', function () {
     });
   });
 
-  var Kr; // Recovery key
+  var recoveryCode = StellarWallet.util.generateRandomRecoveryCode();
+
   it('should enable recovery', function (done) {
     wallet.enableRecovery({
-      secretKey: keyPair.secretKey
-    }).then(function(recoveryKey) {
-      expect(recoveryKey.length).not.to.be.undefined;
-      expect(recoveryKey.length).not.to.be.null;
-      Kr = recoveryKey;
-      done();
-    });
+      secretKey: keyPair.secretKey,
+      recoveryCode: recoveryCode
+    }).should.be.fulfilled.and.notify(done)
   });
 
-  it('should throw Forbidden when invalid recoveryKey is passed', function (done) {
+  it('should throw Forbidden when invalid recoveryCode is passed', function (done) {
     StellarWallet.recover({
       server: server,
       username: username,
-      recoveryKey: "abc"
+      recoveryCode: "abc"
     }).should.be.rejectedWith(StellarWallet.errors.Forbidden).and.notify(done);
   });
 
-  var recoveredData;
-  it('should get walletId and walletKey using recoveryKey', function (done) {
+  var recoveredMasterKey;
+  it('should get masterKey using recoveryCode', function (done) {
     StellarWallet.recover({
       server: server,
       username: username,
-      recoveryKey: Kr
-    }).then(function(data) {
-      expect(data.walletId).to.be.equal(wallet.getWalletId());
-      expect(data.walletKey).to.be.equal(wallet.getWalletKey());
-      recoveredData = data;
+      recoveryCode: recoveryCode
+    }).then(function(masterKey) {
+      // Derive walletId and walletKey and check
+//      expect(data.walletId).to.be.equal(wallet.getWalletId());
+//      expect(data.walletKey).to.be.equal(wallet.getWalletKey());
+      recoveredMasterKey = masterKey;
       done();
     });
   });
@@ -285,8 +283,7 @@ describe('stellar-wallet', function () {
     StellarWallet.getWallet({
       server: server,
       username: username,
-      walletId: recoveredData.walletId,
-      walletKey: recoveredData.walletKey
+      masterKey: recoveredMasterKey
     }).then(function(w) {
       expect(w.getWalletId()).to.be.equal(wallet.getWalletId());
       expect(w.getWalletKey()).to.be.equal(wallet.getWalletKey());
