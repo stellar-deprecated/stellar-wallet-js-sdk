@@ -10,18 +10,23 @@ gulp.task('build', function(done) {
   runSequence('clean', ['build-browser'], done);
 });
 
+gulp.task('hooks:precommit', ['build'], function() {
+  return gulp.src('build/*')
+    .pipe(plugins.git.add());
+});
+
 gulp.task('build-browser', [], function() {
-  gulp.src('index.js')
-      .pipe(plugins.webpack({
-        output: {
-          library: 'StellarWallet'
-        }
-      }))
-      .pipe(plugins.rename('stellar-wallet.js'))
-      .pipe(gulp.dest('build'))
-      .pipe(plugins.uglify())
-      .pipe(plugins.rename('stellar-wallet.min.js'))
-      .pipe(gulp.dest('build'));
+  return gulp.src('index.js')
+    .pipe(plugins.webpack({
+      output: {
+        library: 'StellarWallet'
+      }
+    }))
+    .pipe(plugins.rename('stellar-wallet.js'))
+    .pipe(gulp.dest('build'))
+    .pipe(plugins.uglify())
+    .pipe(plugins.rename('stellar-wallet.min.js'))
+    .pipe(gulp.dest('build'));
 });
 
 gulp.task('clean', function () {
