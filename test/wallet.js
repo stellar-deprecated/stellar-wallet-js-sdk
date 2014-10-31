@@ -277,9 +277,9 @@ describe('stellar-wallet', function () {
     });
   });
 
-  it('should get wallet object using recoveryData, change password and get wallet using new password', function (done) {
-    var newPassword = 'newPassword';
+  var newPassword = 'newPassword';
 
+  it('should get wallet object using recoveryData, change password and get wallet using new password', function (done) {
     StellarWallet.getWallet({
       server: server,
       username: username,
@@ -312,6 +312,36 @@ describe('stellar-wallet', function () {
         expect(w.getWalletKey()).not.to.be.equal(wallet.getWalletKey());
         expect(w.getMainData()).to.be.equal(newMainData);
         expect(w.getKeychainData()).to.be.equal(JSON.stringify(keyPair));
+        wallet = w;
+      });
+    }).should.be.fulfilled.and.notify(done);
+  });
+
+  it('should update lockVersion', function (done) {
+    // Simulates two wallets on different machines
+    var wallet1 = wallet;
+    var wallet2;
+
+    return StellarWallet.getWallet({
+      server: server,
+      username: username,
+      password: newPassword
+    }).then(function(w) {
+      wallet2 = w;
+    }).then(function() {
+      // This increments lockVersion
+      return wallet1.updateMainData({
+        mainData: 'test',
+        secretKey: keyPair.secretKey
+      })
+    }).then(function() {
+      return wallet2.updateLockVersion({
+        secretKey: keyPair.secretKey
+      })
+    }).then(function() {
+      return wallet2.updateMainData({
+        mainData: 'test2',
+        secretKey: keyPair.secretKey
       });
     }).should.be.fulfilled.and.notify(done);
   });
