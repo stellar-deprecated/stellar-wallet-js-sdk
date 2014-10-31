@@ -46,7 +46,7 @@ an issue number.
 * [Bug tracker (Github)](https://github.com/stellar/stellar-wallet-js-sdk/issues)
 * <a href="https://www.clahub.com/agreements/stellar/stellar-wallet-js-sdk">Contributor License Agreement</a>
 * [Explore the API](https://www.stellar.org/api/)
-* [Readme for stellard](https://github.com/stellar/stellar-wallet-js-sdk/blob/master/README.md)
+* [Readme for stellar-wallet-js-sdk](https://github.com/stellar/stellar-wallet-js-sdk/blob/master/README.md)
 * #stellar-dev IRC channel on freenode.org
 
 
