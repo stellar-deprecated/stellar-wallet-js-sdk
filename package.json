@@ -6,6 +6,7 @@
     "stellar"
   ],
   "dependencies": {
+    "bs58": "~2.0.0",
     "bluebird": "~2.3.4",
     "camel-case": "~1.0.2",
     "lodash": "~2.4.1",
