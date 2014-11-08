@@ -12,7 +12,7 @@ before_script:
   - cd stellar-wallet
   - git checkout master
   - npm install
-  - cp ../config/stellar_wallet_config.json ./config/development.json
+  - cp ../test/config/stellar_wallet_config.json ./config/development.json
   - NODE_ENV=development gulp db:setup
   - NODE_ENV=development forever start ./node_modules/stex/bin/stex www
   - cd ..
