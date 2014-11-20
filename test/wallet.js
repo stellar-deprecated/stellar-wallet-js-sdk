@@ -58,6 +58,15 @@ describe('stellar-wallet', function () {
     }).should.be.rejectedWith(StellarWallet.errors.InvalidField).and.notify(done);
   });
 
+  it('should throw InvalidUsername error', function (done) {
+    StellarWallet.createWallet({
+      server: server,
+      username: '^&*^#*&$^&*',
+      password: password,
+      mainData: JSON.stringify(mainData)
+    }).should.be.rejectedWith(StellarWallet.errors.InvalidField).and.notify(done);
+  });
+
   it('should successfully create a wallet', function (done) {
     StellarWallet.createWallet({
       server: server,
