@@ -1,22 +1,8 @@
 language: node_js
 node_js:
   - "0.10"
-  - "0.10"
-services:
-  - mysql
-  - redis
-before_install:
-  - npm install -g forever
-before_script:
-  - git clone https://github.com/stellar/stellar-wallet.git
-  - cd stellar-wallet
-  - git checkout master
-  - npm install
-  - cp ../test/config/stellar_wallet_config.json ./config/development.json
-  - NODE_ENV=development gulp db:setup
-  - NODE_ENV=development forever start ./node_modules/stex/bin/stex www
-  - cd ..
 script:
+  - zuul test/wallet.js
   - npm run-script coverage
 after_success:
   - gulp submit-coverage

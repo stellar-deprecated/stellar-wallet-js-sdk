@@ -1,12 +1,14 @@
 'use strict';
 
+var base32 = require('thirty-two');
+var chai = require("chai");
+var chaiAsPromised = require("chai-as-promised");
+var nacl = require('tweetnacl');
+var notp = require('notp');
+
+var StellarWallet;
 if (typeof window === 'undefined') {
-  var base32 = require('thirty-two');
-  var chai = require("chai");
-  var chaiAsPromised = require("chai-as-promised");
-  var nacl = require('tweetnacl');
-  var notp = require('notp');
-  var StellarWallet = require('../index.js');
+  StellarWallet = require('../index.js');
 }
 
 var expect = chai.expect;
@@ -19,8 +21,9 @@ describe('stellar-wallet', function () {
 
   var server = 'http://localhost:3000/v2';
 
-  var keyPair = StellarWallet.util.generateKeyPair();
-  var newKeyPair = StellarWallet.util.generateKeyPair();
+  var keyPair;
+  var totpKey;
+  var recoveryCode;
 
   var mainData = {
     key: 'val'
@@ -30,9 +33,27 @@ describe('stellar-wallet', function () {
   var username = "joe"+Math.random().toString()+"@hostname.org";
   var password = "my_passw0rd";
 
-  var totpKey = StellarWallet.util.generateRandomTotpKey();
-
   var wallet;
+
+  before(function(done) {
+    // Wait for StellarWallet to load in a browser
+    function waitForLoad() {
+      if (typeof window !== 'undefined' && typeof window.StellarWallet === 'undefined') {
+        setTimeout(wait, 1000);
+      } else {
+        // zuul hack
+        if (typeof StellarWallet === 'undefined') {
+          StellarWallet = window.StellarWallet;
+        }
+
+        keyPair = StellarWallet.util.generateKeyPair();
+        totpKey = StellarWallet.util.generateRandomTotpKey();
+        recoveryCode = StellarWallet.util.generateRandomRecoveryCode();
+        done();
+      }
+    }
+    waitForLoad();
+  });
 
   it('should throw MissingField error', function (done) {
     StellarWallet.getWallet({
@@ -253,8 +274,6 @@ describe('stellar-wallet', function () {
       done();
     });
   });
-
-  var recoveryCode = StellarWallet.util.generateRandomRecoveryCode();
 
   it('should enable recovery', function (done) {
     wallet.enableRecovery({

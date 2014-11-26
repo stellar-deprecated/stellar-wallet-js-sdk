@@ -1,0 +1,11 @@
+ui: mocha-bdd
+#server: ./test/server.js
+scripts:
+  - "./build/stellar-wallet.js"
+browsers:
+  - name: chrome
+    version: latest
+  - name: firefox
+    version: latest
+  - name: ie
+    version: latest
