@@ -1,10 +1,7 @@
 'use strict';
 
-var base32 = require('thirty-two');
 var chai = require("chai");
 var chaiAsPromised = require("chai-as-promised");
-var nacl = require('tweetnacl');
-var notp = require('notp');
 
 var StellarWallet;
 if (typeof window === 'undefined') {
@@ -16,66 +13,79 @@ chai.should();
 chai.use(chaiAsPromised);
 
 describe('stellar-wallet', function () {
-  // Timeout increased because majority of tests below connect to stellar-wallet
+  // Timeout increased because majority of tests below connect to mock server
   this.timeout(5000);
 
   var server = 'http://localhost:3000/v2';
-
-  var keyPair;
-  var totpKey;
-  var recoveryCode;
-
-  var mainData = {
-    key: 'val'
-  };
-  var newMainData = 'newMainData';
-
-  var username = "joe"+Math.random().toString()+"@hostname.org";
-  var password = "my_passw0rd";
-
-  var wallet;
+  var mockServer;
 
   before(function(done) {
+    if (typeof window === 'undefined') {
+      // Start mock server. In sauce labs environment zuul is responsible for it.
+      mockServer = require('./server.js');
+    }
+
     // Wait for StellarWallet to load in a browser
     function waitForLoad() {
       if (typeof window !== 'undefined' && typeof window.StellarWallet === 'undefined') {
-        setTimeout(wait, 1000);
+        setTimeout(waitForLoad, 1000);
       } else {
-        // zuul hack
+        // zuul hacks
         if (typeof StellarWallet === 'undefined') {
           StellarWallet = window.StellarWallet;
+          server = '/v2';
         }
-
-        keyPair = StellarWallet.util.generateKeyPair();
-        totpKey = StellarWallet.util.generateRandomTotpKey();
-        recoveryCode = StellarWallet.util.generateRandomRecoveryCode();
         done();
       }
     }
     waitForLoad();
   });
 
-  it('should throw MissingField error', function (done) {
+  after(function(done) {
+    if (mockServer) {
+      mockServer.close();
+    }
+    done();
+  });
+
+  function getNoTotpWallet() {
+    return StellarWallet.getWallet({
+      server: server,
+      username: 'bartek@stellar.org',
+      password: '1234567890'
+    });
+  }
+
+  function getTotpWallet() {
+    return StellarWallet.getWallet({
+      server: server,
+      username: 'jared@stellar.org',
+      password: '0987654321',
+      totpCode: '000000'
+    });
+  }
+
+  it('should throw MissingField error when server is missing', function (done) {
     StellarWallet.getWallet({
-      username: username,
-      password: password
+      username: 'test@stellar.org',
+      password: '1234567890'
     }).should.be.rejectedWith(StellarWallet.errors.MissingField).and.notify(done);
   });
 
   it('should throw WalletNotFound error', function (done) {
     StellarWallet.getWallet({
       server: server,
-      username: username,
-      password: password
+      username: 'notfound@stellar.org',
+      password: 'test'
     }).should.be.rejectedWith(StellarWallet.errors.WalletNotFound).and.notify(done);
   });
 
   it('should throw InvalidField error', function (done) {
     StellarWallet.createWallet({
       server: server,
-      username: username,
-      password: password,
-      mainData: mainData // mainData must be stringified
+      username: 'bartek@stellar.org',
+      password: '1234567890',
+      mainData: {email: 'bartek@stellar.org'} // mainData must be stringified
     }).should.be.rejectedWith(StellarWallet.errors.InvalidField).and.notify(done);
   });
 
@@ -83,19 +93,21 @@ describe('stellar-wallet', function () {
     StellarWallet.createWallet({
       server: server,
       username: '^&*^#*&$^&*',
-      password: password,
-      mainData: JSON.stringify(mainData)
+      password: '1234567890',
+      mainData: 'mainData'
     }).should.be.rejectedWith(StellarWallet.errors.InvalidField).and.notify(done);
   });
 
   it('should successfully create a wallet', function (done) {
+    var keyPair = StellarWallet.util.generateKeyPair();
+
     StellarWallet.createWallet({
       server: server,
-      username: username,
-      password: password,
+      username: 'new_user@stellar.org',
+      password: 'xxx',
       publicKey: keyPair.publicKey,
       keychainData: JSON.stringify(keyPair),
-      mainData: JSON.stringify(mainData),
+      mainData: 'mainData',
       kdfParams: {
         algorithm: 'scrypt',
         bits: 256,
@@ -105,19 +117,22 @@ describe('stellar-wallet', function () {
       }
     }).then(function(wallet) {
       expect(wallet.getServer()).to.be.equal(server);
+      expect(wallet.getMainData()).to.be.equal('mainData');
       expect(wallet.isTotpEnabled()).to.be.false;
       done();
     });
   });
 
   it('should fail with UsernameAlreadyTaken error', function (done) {
+    var keyPair = StellarWallet.util.generateKeyPair();
+
     StellarWallet.createWallet({
       server: server,
-      username: username,
-      password: password,
+      username: 'bartek@stellar.org',
+      password: 'qwerty',
       publicKey: keyPair.publicKey,
       keychainData: JSON.stringify(keyPair),
-      mainData: JSON.stringify(mainData),
+      mainData: 'someData',
       kdfParams: {
         algorithm: 'scrypt',
         bits: 256,
@@ -128,10 +143,10 @@ describe('stellar-wallet', function () {
     }).should.be.rejectedWith(StellarWallet.errors.UsernameAlreadyTaken).and.notify(done);
   });
 
-  it('should throw Forbidden error', function (done) {
+  it('should throw Forbidden error when wrong password is passed', function (done) {
     StellarWallet.getWallet({
       server: server,
-      username: username,
+      username: 'bartek@stellar.org',
       password: 'wrong password'
     }).should.be.rejectedWith(StellarWallet.errors.Forbidden).and.notify(done);
   });
@@ -139,17 +154,19 @@ describe('stellar-wallet', function () {
   it('should successfully get wallet', function (done) {
     StellarWallet.getWallet({
       server: server,
-      username: username,
-      password: password
-    }).then(function(w) {
-      wallet = w;
+      username: 'bartek@stellar.org',
+      password: '1234567890'
+    }).then(function(wallet) {
+      expect(wallet.getUsername()).to.be.equal('bartek@stellar.org');
+      expect(wallet.getServer()).to.be.equal(server);
+
       var fetchedMainData = JSON.parse(wallet.getMainData());
       expect(fetchedMainData).not.to.be.empty;
-      expect(fetchedMainData).to.be.deep.equal(mainData);
+      expect(fetchedMainData.username).to.be.equal('bartek');
 
       var fetchedKeychainData = JSON.parse(wallet.getKeychainData());
       expect(fetchedKeychainData).not.to.be.empty;
-      expect(fetchedKeychainData).to.be.deep.equal(keyPair);
+      expect(fetchedKeychainData.signingKeys.address).to.be.equal('gK1UXqXDKRANNFvmcHXHhxwM2KnqiszWSj');
 
       expect(wallet.isTotpEnabled()).to.be.false;
 
@@ -157,48 +174,43 @@ describe('stellar-wallet', function () {
     });
   });
 
-  it('should return correct username', function (done) {
-    expect(wallet.getUsername()).to.be.deep.equal(username);
-    done();
-  });
-
-  it('should return correct server', function (done) {
-    expect(wallet.getServer()).to.be.deep.equal(server);
-    done();
-  });
-
   it('should throw InvalidTotpCode error while enableTotp because of invalid TOTP code', function (done) {
-    var totpCode = notp.totp.gen(base32.decode(totpKey), {});
-    totpCode = ((parseInt(totpCode[0]) + 1) % 10).toString()+totpCode.substr(1);
+    var totpKey = StellarWallet.util.generateRandomTotpKey();
 
-    wallet.enableTotp({
-      totpKey: totpKey,
-      totpCode: totpCode,
-      secretKey: keyPair.secretKey
-    }).should.be.rejectedWith(StellarWallet.errors.InvalidTotpCode).and.notify(done);
+    getNoTotpWallet().then(function(wallet) {
+      wallet.enableTotp({
+        totpKey: totpKey,
+        totpCode: '123456',
+        secretKey: 'u5u/mMcUgKLMY4Er2h1J94Xf2cS+1w3hSK+kfwCGoqzV88+SyOraYvvn2rPvJvakfXIsWGlix9zBnXwKKfZZEQ=='
+      }).should.be.rejectedWith(StellarWallet.errors.InvalidTotpCode).and.notify(done);
+    });
   });
 
   it('should successfully enable TOTP for a wallet', function (done) {
-    var totpCode = notp.totp.gen(base32.decode(totpKey), {});
-    wallet.enableTotp({
-      totpKey: totpKey,
-      totpCode: totpCode,
-      secretKey: keyPair.secretKey
-    }).then(function() {
-      expect(wallet.isTotpEnabled()).to.be.true;
-      done();
+    var totpKey = StellarWallet.util.generateRandomTotpKey();
+
+    getNoTotpWallet().then(function(wallet) {
+      wallet.enableTotp({
+        totpKey: totpKey,
+        totpCode: '000000',
+        secretKey: 'u5u/mMcUgKLMY4Er2h1J94Xf2cS+1w3hSK+kfwCGoqzV88+SyOraYvvn2rPvJvakfXIsWGlix9zBnXwKKfZZEQ=='
+      }).then(function() {
+        expect(wallet.isTotpEnabled()).to.be.true;
+        done();
+      });
     });
   });
 
   it('should successfully send update wallet request and update wallet object', function (done) {
-    wallet.updateMainData({
-      mainData: newMainData,
-      secretKey: keyPair.secretKey
-    }).then(function() {
-      expect(wallet.getMainData()).not.to.be.empty;
-      expect(wallet.getMainData()).to.be.equal(newMainData);
-
-      done();
+    getNoTotpWallet().then(function(wallet) {
+      wallet.updateMainData({
+        mainData: 'newMainData',
+        secretKey: 'u5u/mMcUgKLMY4Er2h1J94Xf2cS+1w3hSK+kfwCGoqzV88+SyOraYvvn2rPvJvakfXIsWGlix9zBnXwKKfZZEQ=='
+      }).then(function() {
+        expect(wallet.getMainData()).not.to.be.empty;
+        expect(wallet.getMainData()).to.be.equal('newMainData');
+        done();
+      });
     });
   });
 
@@ -207,33 +219,32 @@ describe('stellar-wallet', function () {
   it('should throw TotpCodeRequired error', function (done) {
     StellarWallet.getWallet({
       server: server,
-      username: username,
-      password: password
+      username: 'jared@stellar.org',
+      password: '0987654321'
     }).should.be.rejectedWith(StellarWallet.errors.TotpCodeRequired).and.notify(done);
   });
 
   it('should throw Forbidden error because of invalid TOTP code', function (done) {
-    var totpCode = notp.totp.gen(base32.decode(totpKey), {});
-    totpCode = ((parseInt(totpCode[0]) + 1) % 10).toString()+totpCode.substr(1);
-
     StellarWallet.getWallet({
       server: server,
-      username: username,
-      password: password,
-      totpCode: totpCode
+      username: 'jared@stellar.org',
+      password: '0987654321',
+      totpCode: '123456'
     }).should.be.rejectedWith(StellarWallet.errors.Forbidden).and.notify(done);
   });
 
   it('should get wallet with TOTP required', function (done) {
-    var totpCode = notp.totp.gen(base32.decode(totpKey), {});
     StellarWallet.getWallet({
       server: server,
-      username: username,
-      password: password,
-      totpCode: totpCode
+      username: 'jared@stellar.org',
+      password: '0987654321',
+      totpCode: '000000'
     }).then(function(wallet) {
       expect(wallet.getMainData()).not.to.be.empty;
-      expect(wallet.getMainData()).to.be.equal(newMainData);
+      expect(JSON.parse(wallet.getMainData()).username).to.be.equal('jared');
+
+      expect(wallet.getKeychainData()).not.to.be.empty;
+      expect(JSON.parse(wallet.getKeychainData()).signingKeys.address).to.be.equal('grdCvaWb6VXRdF6k1osi1LTUqjCyocK1m');
 
       expect(wallet.isTotpEnabled()).to.be.true;
       done();
@@ -243,84 +254,76 @@ describe('stellar-wallet', function () {
   it('should send TOTP lost device request', function (done) {
     StellarWallet.lostTotpDevice({
       server: server,
-      username: username,
-      password: password
+      username: 'jared@stellar.org',
+      password: '0987654321'
     }).then(function() {
       done();
     });
   });
 
   it('should successfully disable TOTP for a wallet', function (done) {
-    var totpCode = notp.totp.gen(base32.decode(totpKey), {});
-    wallet.disableTotp({
-      totpCode: totpCode,
-      secretKey: keyPair.secretKey
-    }).then(function() {
-      expect(wallet.isTotpEnabled()).to.be.false;
-      done();
-    });
-  });
-
-  it('should get wallet without TOTP code after disabling TOTP', function (done) {
-    StellarWallet.getWallet({
-      server: server,
-      username: username,
-      password: password
-    }).then(function(wallet) {
-      expect(wallet.getMainData()).not.to.be.empty;
-      expect(wallet.getMainData()).to.be.equal(newMainData);
-
-      expect(wallet.isTotpEnabled()).to.be.false;
-      done();
-    });
+    getTotpWallet().then(function(wallet) {
+      wallet.disableTotp({
+        totpCode: '000000',
+        secretKey: 'JLBApQUe4QAsQkiaUOkJ94wgtMMmiyzcxP+DeFPynKnuxJAEX3ifUYzoxeEdeQLIXSZ0A6XUBJFktUdwIh+pOg=='
+      }).then(function() {
+        expect(wallet.isTotpEnabled()).to.be.false;
+        done();
+      });
+    })
   });
 
   it('should enable recovery', function (done) {
-    wallet.enableRecovery({
-      secretKey: keyPair.secretKey,
-      recoveryCode: recoveryCode
-    }).should.be.fulfilled.and.notify(done)
+    getNoTotpWallet().then(function(wallet) {
+      wallet.enableRecovery({
+        secretKey: 'u5u/mMcUgKLMY4Er2h1J94Xf2cS+1w3hSK+kfwCGoqzV88+SyOraYvvn2rPvJvakfXIsWGlix9zBnXwKKfZZEQ==',
+        recoveryCode: StellarWallet.util.generateRandomRecoveryCode()
+      }).should.be.fulfilled.and.notify(done);
+    })
   });
 
   it('should throw Forbidden when invalid recoveryCode is passed', function (done) {
     StellarWallet.recover({
       server: server,
-      username: username,
+      username: 'bartek@stellar.org',
       recoveryCode: "abc"
     }).should.be.rejectedWith(StellarWallet.errors.Forbidden).and.notify(done);
   });
 
-  var recoveredMasterKey;
   it('should get masterKey using recoveryCode', function (done) {
     StellarWallet.recover({
       server: server,
-      username: username,
-      recoveryCode: recoveryCode
+      username: 'bartek@stellar.org',
+      recoveryCode: 'Be6dkzayXgh7Zy6Z5TkYs4ob2trxSD36ayvPVB9SQRd8'
     }).then(function(masterKey) {
-      // Derive walletId and walletKey and check
-//      expect(data.walletId).to.be.equal(wallet.getWalletId());
-//      expect(data.walletKey).to.be.equal(wallet.getWalletKey());
-      recoveredMasterKey = masterKey;
       done();
     });
   });
 
-  var newPassword = 'newPassword';
-
   it('should get wallet object using recoveryData, change password and get wallet using new password', function (done) {
-    StellarWallet.getWallet({
+    StellarWallet.recover({
       server: server,
-      username: username,
-      masterKey: recoveredMasterKey
-    }).then(function(w) {
-      expect(w.getWalletId()).to.be.equal(wallet.getWalletId());
-      expect(w.getWalletKey()).to.be.equal(wallet.getWalletKey());
-      expect(w.getMainData()).to.be.equal(newMainData);
-      expect(w.getKeychainData()).to.be.equal(JSON.stringify(keyPair));
-      return w;
-    }).then(function(w) {
+      username: 'bartek@stellar.org',
+      recoveryCode: 'Be6dkzayXgh7Zy6Z5TkYs4ob2trxSD36ayvPVB9SQRd8'
+    }).then(function(masterKey) {
+      return StellarWallet.getWallet({
+        server: server,
+        username: 'bartek@stellar.org',
+        masterKey: masterKey
+      });
+    }).then(function(wallet) {
+      var fetchedMainData = JSON.parse(wallet.getMainData());
+      expect(fetchedMainData).not.to.be.empty;
+      expect(fetchedMainData.username).to.be.equal('bartek');
+
+      var fetchedKeychainData = JSON.parse(wallet.getKeychainData());
+      expect(fetchedKeychainData).not.to.be.empty;
+      expect(fetchedKeychainData.signingKeys.address).to.be.equal('gK1UXqXDKRANNFvmcHXHhxwM2KnqiszWSj');
+
+      return wallet;
+    })/*.then(function(w) {
       return w.changePassword({
-        newPassword: newPassword,
+        newPassword: 'newPassword',
         secretKey: keyPair.secretKey,
         kdfParams: {
           algorithm: 'scrypt',
@@ -330,47 +333,6 @@ describe('stellar-wallet', function () {
           p: 1
         }
       });
-    }).then(function() {
-      return StellarWallet.getWallet({
-        server: server,
-        username: username,
-        password: newPassword
-      }).then(function(w) {
-        expect(w.getWalletId()).not.to.be.equal(wallet.getWalletId());
-        expect(w.getWalletKey()).not.to.be.equal(wallet.getWalletKey());
-        expect(w.getMainData()).to.be.equal(newMainData);
-        expect(w.getKeychainData()).to.be.equal(JSON.stringify(keyPair));
-        wallet = w;
-      });
-    }).should.be.fulfilled.and.notify(done);
-  });
-
-  it('should update lockVersion', function (done) {
-    // Simulates two wallets on different machines
-    var wallet1 = wallet;
-    var wallet2;
-
-    return StellarWallet.getWallet({
-      server: server,
-      username: username,
-      password: newPassword
-    }).then(function(w) {
-      wallet2 = w;
-    }).then(function() {
-      // This increments lockVersion
-      return wallet1.updateMainData({
-        mainData: 'test',
-        secretKey: keyPair.secretKey
-      })
-    }).then(function() {
-      return wallet2.updateLockVersion({
-        secretKey: keyPair.secretKey
-      })
-    }).then(function() {
-      return wallet2.updateMainData({
-        mainData: 'test2',
-        secretKey: keyPair.secretKey
-      });
-    }).should.be.fulfilled.and.notify(done);
+    })*/.should.be.fulfilled.and.notify(done);
   });
 });

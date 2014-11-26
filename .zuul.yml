@@ -1,5 +1,5 @@
 ui: mocha-bdd
-#server: ./test/server.js
+server: ./test/server.js
 scripts:
   - "./build/stellar-wallet.js"
 browsers:
