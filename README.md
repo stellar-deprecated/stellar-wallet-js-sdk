@@ -6,9 +6,14 @@ stellar-wallet-js-sdk
 
 [![Build Status](https://travis-ci.org/stellar/stellar-wallet-js-sdk.svg?branch=master)](https://travis-ci.org/stellar/stellar-wallet-js-sdk) [![Coverage Status](https://coveralls.io/repos/stellar/stellar-wallet-js-sdk/badge.png?branch=master)](https://coveralls.io/r/stellar/stellar-wallet-js-sdk?branch=master)
 
+[![Sauce Test Status](https://saucelabs.com/browser-matrix/bartekn.svg)](https://saucelabs.com/u/bartekn)
+
 ### Usage in a browser
 ```html
+Normal version:
 <script src="/build/stellar-wallet.js"></script>
+Minified version:
+<script src="/build/stellar-wallet.min.js"></script>
 ```
 
 ### Usage in Node
@@ -378,4 +383,12 @@ gulp build
 ```sh
 npm install
 gulp watch
+```
+
+### Testing
+```sh
+# Node
+npm test
+# Browser
+zuul ./test/wallet.js --local
 ```
