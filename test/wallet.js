@@ -336,4 +336,6 @@ describe('stellar-wallet', function () {
       });
     })*/.should.be.fulfilled.and.notify(done);
   });
+
+  it('should successfully send delete wallet request');
 });
