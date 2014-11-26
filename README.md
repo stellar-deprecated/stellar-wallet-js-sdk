@@ -379,3 +379,11 @@ gulp build
 npm install
 gulp watch
 ```
+
+### Testing
+```sh
+# Node
+npm test
+# Browser
+zuul ./test/wallet.js --local
+```

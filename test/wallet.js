@@ -14,7 +14,8 @@ chai.use(chaiAsPromised);
 
 describe('stellar-wallet', function () {
   // Timeout increased because majority of tests below connect to mock server
-  this.timeout(5000);
+  // and sauce labs is slow sometimes.
+  this.timeout(10000);
 
   var server = 'http://localhost:3000/v2';
   var mockServer;
