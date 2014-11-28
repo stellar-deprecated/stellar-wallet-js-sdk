@@ -1,5 +1,6 @@
 'use strict';
 
+var _ = require('lodash');
 var chai = require("chai");
 var chaiAsPromised = require("chai-as-promised");
 
@@ -13,9 +14,8 @@ chai.should();
 chai.use(chaiAsPromised);
 
 describe('stellar-wallet', function () {
-  // Timeout increased because majority of tests below connect to mock server
-  // and sauce labs is slow sometimes.
-  this.timeout(30000);
+  var self = this;
+  self.timeout(5000);
 
   var server = 'http://localhost:3000/v2';
   var mockServer;
@@ -35,6 +35,9 @@ describe('stellar-wallet', function () {
         if (typeof StellarWallet === 'undefined') {
           StellarWallet = window.StellarWallet;
           server = '/v2';
+          // Timeout increased because majority of tests below connect to mock server
+          // and sauce labs is slow sometimes.
+          self.timeout(30000);
         }
         done();
       }
@@ -338,4 +341,16 @@ describe('stellar-wallet', function () {
   });
 
   it('should successfully send delete wallet request');
+
+  it('getWallet should not modify params argument object', function(done) {
+    var params = {
+      server: server,
+      username: 'bartek@stellar.org',
+      password: '1234567890'
+    };
+    var paramsCopy = _.cloneDeep(params);
+    StellarWallet.getWallet(params).should.be.fulfilled.then(function() {
+      expect(params).to.be.deep.equal(paramsCopy);
+    }).should.notify(done);
+  })
 });
