@@ -15,7 +15,7 @@ chai.use(chaiAsPromised);
 
 describe('stellar-wallet', function () {
   var self = this;
-  self.timeout(5000);
+  self.timeout(15000);
 
   var server = 'http://localhost:3000/v2';
   var mockServer;
@@ -35,9 +35,6 @@ describe('stellar-wallet', function () {
         if (typeof StellarWallet === 'undefined') {
           StellarWallet = window.StellarWallet;
           server = '/v2';
-          // Timeout increased because majority of tests below connect to mock server
-          // and sauce labs is slow sometimes.
-          self.timeout(30000);
         }
         done();
       }
