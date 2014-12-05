@@ -15,7 +15,7 @@ chai.use(chaiAsPromised);
 
 describe('stellar-wallet', function () {
   var self = this;
-  self.timeout(15000);
+  self.timeout(30000);
 
   var server = 'http://localhost:3000/v2';
   var mockServer;
