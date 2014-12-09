@@ -1,6 +1,3 @@
-> # :warning: Alpha version. Don't use in production.
-
-
 stellar-wallet-js-sdk
 =====================
 
@@ -328,6 +325,25 @@ wallet.enableRecovery({
 
 You can pass additional parameter: `kdfParams`. If it's not passed `kdfParams`
 will be fetched from stellar-wallet server.
+
+#### `delete`
+
+Removes wallet from stellar-wallet server.
+
+> **Heads up!** This method removes all wallet data from the server! This
+> operation cannot be undone.
+
+```js
+wallet.delete({
+  secretKey: keyPair.secretKey
+}).then(function() {
+  // Everything went... well... fine
+}).catch(StellarWallet.errors.ConnectionError, function(e) {
+  console.log('Connection error.');
+}).catch(function(e) {
+  console.log('Unknown error.');
+});
+```
 
 ### Util methods
 
