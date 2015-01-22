@@ -160,6 +160,7 @@ describe('stellar-wallet', function () {
     }).then(function(wallet) {
       expect(wallet.getUsername()).to.be.equal('bartek@stellar.org');
       expect(wallet.getServer()).to.be.equal(server);
+      expect(wallet.getUpdatedAt()).to.be.equal('2014-10-03 16:30:29');
 
       var fetchedMainData = JSON.parse(wallet.getMainData());
       expect(fetchedMainData).not.to.be.empty;
@@ -241,6 +242,7 @@ describe('stellar-wallet', function () {
       password: '0987654321',
       totpCode: '000000'
     }).then(function(wallet) {
+      expect(wallet.getUpdatedAt()).to.be.equal('2014-10-03 17:10:51');
       expect(wallet.getMainData()).not.to.be.empty;
       expect(JSON.parse(wallet.getMainData()).username).to.be.equal('jared');
 
