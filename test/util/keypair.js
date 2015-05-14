@@ -14,6 +14,8 @@ describe('util/keypair', function () {
     expect(nacl.verify(keyPair.publicKey, keyPairFromSecret.publicKey)).to.be.true;
     expect(keyPair.address).not.to.be.empty;
     expect(keyPair.address.charAt(0)).to.be.equal('g');
+    expect(keyPair.newAddress).not.to.be.empty;
+    expect(keyPair.newAddress.charAt(0)).to.be.equal('g');
     expect(keyPair.secret.charAt(0)).to.be.equal('s');
     done();
   });
@@ -28,6 +30,8 @@ describe('util/keypair', function () {
     var keyPairFromSecret = nacl.sign.keyPair.fromSecretKey(keyPair.secretKey);
     expect(nacl.verify(keyPair.publicKey, keyPairFromSecret.publicKey)).to.be.true;
     expect(keyPair.address).not.to.be.empty;
+    expect(keyPair.newAddress).not.to.be.empty;
+    expect(keyPair.newAddress.charAt(0)).to.be.equal('g');
     expect(keyPair.address.charAt(0)).to.be.equal('g');
     done();
   });
