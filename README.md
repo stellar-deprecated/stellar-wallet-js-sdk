@@ -379,11 +379,11 @@ Example:
 
 ```json
 {
-  newAddress: 'gebqMZGyURm9vUFuroBiZ9piEJKNwqnJaPFnDenxrbAeohPUkg',
-  address: 'gJMWWnGdqpp9zzr7xKrYDKSr2TuZikSC1q',
-  secret: 's3sYSKfA2xuEWFxdv81YcemGdVgFyZWekRTibbo3pD7BVAisF6Q',
-  secretKey: 'c79c7MG4JEYszntBPhy7zKZC7ss5ClJwltyccZFrInFVYHCmjpb9gTyUrp9t5F+835inMntoFR+l59wVuh/g4Q==',
-  publicKey: 'VWBwpo6W/YE8lK6fbeRfvN+YpzJ7aBUfpefcFbof4OE='
+  "newAddress": "gebqMZGyURm9vUFuroBiZ9piEJKNwqnJaPFnDenxrbAeohPUkg",
+  "address": "gJMWWnGdqpp9zzr7xKrYDKSr2TuZikSC1q",
+  "secret": "s3sYSKfA2xuEWFxdv81YcemGdVgFyZWekRTibbo3pD7BVAisF6Q",
+  "secretKey": "c79c7MG4JEYszntBPhy7zKZC7ss5ClJwltyccZFrInFVYHCmjpb9gTyUrp9t5F+835inMntoFR+l59wVuh/g4Q==",
+  "publicKey": "VWBwpo6W/YE8lK6fbeRfvN+YpzJ7aBUfpefcFbof4OE="
 }
 ```
 
