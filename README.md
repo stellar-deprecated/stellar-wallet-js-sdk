@@ -369,7 +369,8 @@ var uri = StellarWallet.util.generateTotpUri(key, {
 #### `util.generateKeyPair`
 
 Generates and returns Ed25519 key pair object containing following properties:
-* `address`
+* `newAddress` - new network address
+* `address` - old network address
 * `secret`
 * `publicKey`
 * `secretKey`
@@ -378,10 +379,11 @@ Example:
 
 ```json
 {
-  "address": "gGc6bA2EuMcjyDCGeXJcWPCjQtekURgA98",
-  "secret": "sfFAfccyhCago1Hatg94AVz4YMJG5DNqTz12jDCFrg9S2KY28zX",
-  "secretKey": "WWNJnJkLuuGps93BHubQwPECLiJjeSfd8SwW9G/BHGAJUnu1B4/1+lhZhcQh2nCjnsYmBL9wZ1EU48ZW7mdGjA==",
-  "publicKey": "CVJ7tQeP9fpYWYXEIdpwo57GJgS/cGdRFOPGVu5nRow="
+  newAddress: 'gebqMZGyURm9vUFuroBiZ9piEJKNwqnJaPFnDenxrbAeohPUkg',
+  address: 'gJMWWnGdqpp9zzr7xKrYDKSr2TuZikSC1q',
+  secret: 's3sYSKfA2xuEWFxdv81YcemGdVgFyZWekRTibbo3pD7BVAisF6Q',
+  secretKey: 'c79c7MG4JEYszntBPhy7zKZC7ss5ClJwltyccZFrInFVYHCmjpb9gTyUrp9t5F+835inMntoFR+l59wVuh/g4Q==',
+  publicKey: 'VWBwpo6W/YE8lK6fbeRfvN+YpzJ7aBUfpefcFbof4OE='
 }
 ```
 
