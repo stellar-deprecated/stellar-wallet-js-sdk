@@ -366,7 +366,7 @@ var uri = StellarWallet.util.generateTotpUri(key, {
 });
 ```
 
-#### `util.generateKeyPair`
+#### `util.generateKeyPair(secret)`
 
 Generates and returns Ed25519 key pair object containing following properties:
 * `newAddress` - new network address
@@ -374,6 +374,8 @@ Generates and returns Ed25519 key pair object containing following properties:
 * `secret`
 * `publicKey`
 * `secretKey`
+
+`secret` argument is optional. If it's not passed, JS SDK will generate random `secret`.
 
 Example:
 
