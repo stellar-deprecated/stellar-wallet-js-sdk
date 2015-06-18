@@ -30,7 +30,7 @@ This method returns [`Wallet` object](#wallet-object).
 ```js
 StellarWallet.createWallet({
   // Required
-  server: "https://wallet-server.com",
+  server: "https://wallet-server.com/v2",
   // Required
   username: "joedoe@hostname.com",
   // Required
@@ -74,7 +74,7 @@ This method returns [`Wallet` object](#wallet-object).
 ```js
 StellarWallet.getWallet({
   // Required
-  server: "https://wallet-server.com",
+  server: "https://wallet-server.com/v2",
   // Required
   username: "joedoe@hostname.com",
   // Required
@@ -101,7 +101,7 @@ You can also get wallet using `masterKey`. It's helpful during recovery process:
 ```js
 StellarWallet.getWallet({
   // Required
-  server: "https://wallet-server.com",
+  server: "https://wallet-server.com/v2",
   // Required
   username: "joedoe@hostname.com",
   // Base64 encoded master key
@@ -137,7 +137,7 @@ If TOTP is enabled additional `totpCode` parameter must be passed.
 ```js
 StellarWallet.recover({
   // Required
-  server: "https://wallet-server.com",
+  server: "https://wallet-server.com/v2",
   // Required
   username: "joedoe@hostname.com",
   // Required
@@ -164,7 +164,7 @@ server to disable 2FA.
 ```js
 StellarWallet.lostTotpDevice({
   // Required
-  server: "https://wallet-server.com",
+  server: "https://wallet-server.com/v2",
   // Required
   username: "joedoe@hostname.com",
   // Required
